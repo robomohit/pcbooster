@@ -1,0 +1,46 @@
+# Pre-commit hooks for Rog Custom Project
+# Install with: pre-commit install
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+
+  - repo: https://github.com/dotnet/format
+    rev: v6.0.0
+    hooks:
+      - id: dotnet-format
+        args: ['--include', '\.(cs|xaml|xml)$']
+
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v8.50.0
+    hooks:
+      - id: eslint
+        files: '\.(js|css)$'
+        additional_dependencies:
+          - eslint@8.50.0
+
+  - repo: local
+    hooks:
+      - id: dotnet-build
+        name: dotnet build
+        entry: dotnet
+        language: system
+        args: ['build', '--no-restore']
+        files: '\.(cs|csproj|xaml)$'
+        pass_filenames: false
+
+      - id: dotnet-test
+        name: dotnet test
+        entry: dotnet
+        language: system
+        args: ['test', '--no-build', '--verbosity', 'normal']
+        files: '\.(cs|csproj)$'
+        pass_filenames: false
