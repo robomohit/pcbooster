@@ -845,15 +845,99 @@ UNDERCLOCKING (THIS APP CAN DO THIS):
         window.chrome.webview.hostObjects.backend.CancelOcScan();
     });
 
-    // ══════ GPU STRESS TEST LOGIC ══════
+    // ══════ STRESS TEST LOGIC (GPU / CPU / COMBINED) ══════
+    let currentStressMode = 'combined'; // 'gpu', 'cpu', 'combined'
+    
+    function getGradeColor(grade) {
+        if (!grade) return '#888';
+        if (grade.startsWith('A')) return '#44ff88';
+        if (grade.startsWith('B')) return '#88ccff';
+        if (grade === 'C') return '#ffcc44';
+        if (grade === 'D') return '#ff8844';
+        return '#ff4444';
+    }
+
+    function setTelemetryText(id, value, suffix) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = (value !== null && value !== undefined) ? (typeof value === 'number' ? value.toFixed(1) : value) + (suffix || '') : '--';
+    }
+
+    function updateGpuTelemetry(status) {
+        setTelemetryText('telGpuMaxTemp', status.maxGpuTemp, 'C');
+        setTelemetryText('telGpuAvgTemp', status.avgGpuTemp, 'C');
+        setTelemetryText('telGpuMinTemp', status.minGpuTemp, 'C');
+        setTelemetryText('telGpuMaxClock', status.maxGpuClock, ' MHz');
+        setTelemetryText('telGpuAvgClock', status.avgGpuClock, ' MHz');
+        setTelemetryText('telGpuMaxPower', status.maxGpuPower, 'W');
+        setTelemetryText('telGpuAvgPower', status.avgGpuPower, 'W');
+        setTelemetryText('telGpuMaxFan', status.maxGpuFanRpm, ' RPM');
+        setTelemetryText('telGpuMaxVram', status.maxVramMb, ' MB');
+        setTelemetryText('telGpuThrottles', status.throttleEvents || status.gpuThrottleEvents, '');
+    }
+
+    function updateCpuTelemetry(status) {
+        setTelemetryText('telCpuMaxTemp', status.maxCpuTemp, 'C');
+        setTelemetryText('telCpuAvgTemp', status.avgCpuTemp, 'C');
+        setTelemetryText('telCpuMinTemp', status.minCpuTemp, 'C');
+        setTelemetryText('telCpuMaxClock', status.maxCpuClock, ' MHz');
+        setTelemetryText('telCpuAvgClock', status.avgCpuClock, ' MHz');
+        setTelemetryText('telCpuMaxPower', status.maxCpuPower, 'W');
+        setTelemetryText('telCpuAvgPower', status.avgCpuPower, 'W');
+        setTelemetryText('telCpuThrottles', status.throttleEvents || status.cpuThrottleEvents, '');
+    }
+
+    function showGradeBadge(grade, score, label) {
+        const badge = document.getElementById('stressGradeBadge');
+        if (!badge || !grade) return;
+        badge.style.display = 'inline-block';
+        badge.style.background = getGradeColor(grade);
+        badge.style.color = (grade.startsWith('A') || grade.startsWith('B')) ? '#111' : '#fff';
+        badge.textContent = `${label || 'GRADE'}: ${grade}` + (score !== null && score !== undefined ? ` | SCORE: ${score}` : '');
+    }
+
+    function buildScoreHtml(status) {
+        let html = '';
+        if (currentStressMode === 'combined') {
+            const msg = (status.gpuMessage || '') + ' / ' + (status.cpuMessage || '');
+            html = msg;
+            if (status.combinedScore !== null && status.combinedScore !== undefined) {
+                html += `<br><span style="display:inline-block; margin-top:6px; background:linear-gradient(90deg, #ff8800, #ff4444); color:white; padding:4px 10px; border-radius:4px; font-weight:800; letter-spacing:1px; box-shadow: 0 4px 12px rgba(255,100,0,0.3);">COMBINED SCORE: ${status.combinedScore}</span>`;
+            }
+        } else if (currentStressMode === 'gpu' && status.rigScore !== null && status.rigScore !== undefined) {
+            html = (status.message || '').split('RIG Score')[0];
+            html += `<br><span style="display:inline-block; margin-top:6px; background:linear-gradient(90deg, #ff8800, #ff4444); color:white; padding:4px 10px; border-radius:4px; font-weight:800; letter-spacing:1px; box-shadow: 0 4px 12px rgba(255,100,0,0.3);">RIG SCORE: ${status.rigScore}</span>`;
+        } else if (currentStressMode === 'cpu' && status.cpuScore !== null && status.cpuScore !== undefined) {
+            html = (status.message || '').split('Score')[0];
+            html += `<br><span style="display:inline-block; margin-top:6px; background:linear-gradient(90deg, #4488ff, #44ccff); color:white; padding:4px 10px; border-radius:4px; font-weight:800; letter-spacing:1px; box-shadow: 0 4px 12px rgba(68,136,255,0.3);">CPU SCORE: ${status.cpuScore}</span>`;
+        }
+        return html;
+    }
+
     async function pollStressTest() {
         if (!window.chrome?.webview?.hostObjects) return;
         try {
-            const raw = await window.chrome.webview.hostObjects.backend.GetStressTestStatus();
-            const status = JSON.parse(raw);
+            let raw, status;
+            const mode = currentStressMode;
+
+            if (mode === 'combined') {
+                raw = await window.chrome.webview.hostObjects.backend.GetCombinedStressTestStatus();
+                status = JSON.parse(raw);
+            } else if (mode === 'cpu') {
+                raw = await window.chrome.webview.hostObjects.backend.GetCpuStressTestStatus();
+                status = JSON.parse(raw);
+            } else {
+                raw = await window.chrome.webview.hostObjects.backend.GetStressTestStatus();
+                status = JSON.parse(raw);
+            }
             
             const msgEl = document.getElementById('stressStatusMsg');
-            if (status.message) msgEl.textContent = status.message;
+            const telPanel = document.getElementById('stressTelemetryPanel');
+            const gpuSection = document.getElementById('telemetryGpuSection');
+            const cpuSection = document.getElementById('telemetryCpuSection');
+
+            // Show/hide telemetry sections based on mode
+            if (gpuSection) gpuSection.style.display = (mode === 'cpu') ? 'none' : 'block';
+            if (cpuSection) cpuSection.style.display = (mode === 'gpu') ? 'none' : 'block';
 
             if (status.isStressing) {
                 document.getElementById('startStressBtn').closest('.stat-card').classList.add('stress-active');
@@ -862,51 +946,121 @@ UNDERCLOCKING (THIS APP CAN DO THIS):
                 document.getElementById('stressProgressContainer').style.display = 'block';
                 document.getElementById('stressProgressBar').style.width = status.progress + '%';
                 document.getElementById('stressDuration').disabled = true;
+                document.getElementById('stressMode').disabled = true;
                 const maxTempEl = document.getElementById('stressMaxTemp');
                 if (maxTempEl) maxTempEl.disabled = true;
                 msgEl.style.color = 'var(--text-main)';
+
+                // Show live telemetry during test
+                if (telPanel) telPanel.style.display = 'block';
+                
+                if (mode === 'combined') {
+                    msgEl.textContent = (status.gpuMessage || 'GPU...') + ' | ' + (status.cpuMessage || 'CPU...');
+                    updateGpuTelemetry(status);
+                    updateCpuTelemetry(status);
+                } else if (mode === 'cpu') {
+                    if (status.message) msgEl.textContent = status.message;
+                    updateCpuTelemetry(status);
+                } else {
+                    if (status.message) msgEl.textContent = status.message;
+                    updateGpuTelemetry(status);
+                }
             } else {
                 document.getElementById('startStressBtn').closest('.stat-card').classList.remove('stress-active');
                 document.getElementById('startStressBtn').style.display = 'block';
                 document.getElementById('cancelStressBtn').style.display = 'none';
                 document.getElementById('stressDuration').disabled = false;
+                document.getElementById('stressMode').disabled = false;
                 const maxTempEl = document.getElementById('stressMaxTemp');
                 if (maxTempEl) maxTempEl.disabled = false;
                 
-                if (status.progress === 0 && !status.message) {
+                if (status.progress === 0 && !status.message && !status.gpuMessage && !status.cpuMessage) {
                      document.getElementById('stressProgressContainer').style.display = 'none';
+                     if (telPanel) telPanel.style.display = 'none';
                 } else if (status.progress === 100) {
                      document.getElementById('stressProgressBar').style.width = '100%';
-                     if (status.message?.includes('Passed')) {
-                         msgEl.style.color = '#44ff88'; // Green
+                     if (telPanel) telPanel.style.display = 'block';
+
+                     // Update final telemetry
+                     if (mode === 'combined' || mode === 'gpu') updateGpuTelemetry(status);
+                     if (mode === 'combined' || mode === 'cpu') updateCpuTelemetry(status);
+
+                     // Determine color from grade/result
+                     const grade = status.stabilityGrade || status.combinedGrade || '';
+                     if (grade.startsWith('A') || grade.startsWith('B')) {
+                         msgEl.style.color = '#44ff88';
+                     } else if (grade === 'C') {
+                         msgEl.style.color = '#ffcc44';
                      } else {
-                         msgEl.style.color = '#ff6677'; // Red/Warning
+                         msgEl.style.color = '#ff6677';
                      }
-                     
-                     if (status.rigScore !== null && status.rigScore !== undefined) {
-                         msgEl.innerHTML = status.message.split('RIG Score')[0] + `<br><span style="display:inline-block; margin-top:6px; background:linear-gradient(90deg, #ff8800, #ff4444); color:white; padding:4px 10px; border-radius:4px; font-weight:800; letter-spacing:1px; box-shadow: 0 4px 12px rgba(255,100,0,0.3);">🏆 RIG SCORE: ${status.rigScore}</span>`;
+
+                     // Show score badges
+                     const scoreHtml = buildScoreHtml(status);
+                     if (scoreHtml) msgEl.innerHTML = scoreHtml;
+
+                     // Show grade badge
+                     if (mode === 'combined') {
+                         showGradeBadge(status.combinedGrade, status.combinedScore, 'COMBINED');
+                     } else if (mode === 'gpu') {
+                         showGradeBadge(status.stabilityGrade, status.rigScore, 'GPU');
+                     } else {
+                         showGradeBadge(status.stabilityGrade, status.cpuScore, 'CPU');
                      }
                 }
-
             }
         } catch(e) {}
     }
 
     setInterval(pollStressTest, 1000);
 
+    // Track mode selection
+    document.getElementById('stressMode')?.addEventListener('change', (e) => {
+        currentStressMode = e.target.value;
+        // Hide telemetry panel when switching modes
+        const telPanel = document.getElementById('stressTelemetryPanel');
+        if (telPanel) telPanel.style.display = 'none';
+        const badge = document.getElementById('stressGradeBadge');
+        if (badge) badge.style.display = 'none';
+        document.getElementById('stressStatusMsg').textContent = 'Ready';
+        document.getElementById('stressStatusMsg').style.color = 'var(--accent-main)';
+        document.getElementById('stressProgressContainer').style.display = 'none';
+    });
+
     document.getElementById('startStressBtn')?.addEventListener('click', () => {
         if (!window.chrome?.webview?.hostObjects) return;
         const seconds = parseInt(document.getElementById('stressDuration').value) || 60;
         const maxTemp = parseInt(document.getElementById('stressMaxTemp')?.value) || 85;
-        window.chrome.webview.hostObjects.backend.StartStressTest(seconds, maxTemp);
+        const mode = document.getElementById('stressMode')?.value || 'gpu';
+        currentStressMode = mode;
+
+        // Reset telemetry display
+        const badge = document.getElementById('stressGradeBadge');
+        if (badge) badge.style.display = 'none';
+
+        if (mode === 'combined') {
+            window.chrome.webview.hostObjects.backend.StartCombinedStressTest(seconds, maxTemp);
+        } else if (mode === 'cpu') {
+            window.chrome.webview.hostObjects.backend.StartCpuStressTest(seconds, maxTemp);
+        } else {
+            window.chrome.webview.hostObjects.backend.StartStressTest(seconds, maxTemp);
+        }
         document.getElementById('stressProgressContainer').style.display = 'block';
         document.getElementById('stressProgressBar').style.width = '0%';
         document.getElementById('stressStatusMsg').style.color = 'var(--accent-main)';
+        document.getElementById('stressStatusMsg').textContent = 'Starting...';
     });
 
     document.getElementById('cancelStressBtn')?.addEventListener('click', () => {
         if (!window.chrome?.webview?.hostObjects) return;
-        window.chrome.webview.hostObjects.backend.CancelStressTest();
+        const mode = currentStressMode;
+        if (mode === 'combined') {
+            window.chrome.webview.hostObjects.backend.CancelCombinedStressTest();
+        } else if (mode === 'cpu') {
+            window.chrome.webview.hostObjects.backend.CancelCpuStressTest();
+        } else {
+            window.chrome.webview.hostObjects.backend.CancelStressTest();
+        }
     });
 
     // AI Approve OC function (called from AI-generated buttons)

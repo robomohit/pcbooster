@@ -260,6 +260,25 @@ body.mode-turbo {
     border-color: #ff3333 !important;
 }
 
+/* ══════ STRESS TEST TELEMETRY ══════ */
+.telemetry-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3px 0;
+    font-size: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.telemetry-row span:first-child {
+    color: var(--text-muted);
+    font-weight: 500;
+}
+.telemetry-row span:last-child {
+    color: var(--text-main);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
 /* ══════ ERROR TOAST ══════ */
 .error-toast {
     position: fixed; bottom: -100px; right: 20px;

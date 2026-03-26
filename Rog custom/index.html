@@ -278,39 +278,82 @@
                         </div>
                     </div>
 
-                    <!-- GPU Stress Test Card -->
+                    <!-- Stress Test Card -->
                     <div class="stat-card" style="grid-column: 1 / -1;">
                         <div class="card-header">
-                            <h3>GPU BURN-IN (STRESS TEST)<span class="model-name">Thermal & Stability validation</span></h3>
+                            <h3>STRESS TEST<span class="model-name">Thermal & Stability validation</span></h3>
                             <button class="ai-scan-btn" id="cancelStressBtn" style="background: rgba(255,42,68,0.2); border: 1px solid rgba(255,42,68,0.5); color: #ff6677; display:none;">
-                                🛑 Stop Test
+                                Stop Test
                             </button>
                         </div>
-                        <p style="color:var(--text-muted); font-size:12px; margin-top: 0; margin-bottom: 16px;">Applies a sustained DirectX rendering workload to verify if your current Overclock is stable and monitors for physical thermal throttling.</p>
+                        <p style="color:var(--text-muted); font-size:12px; margin-top: 0; margin-bottom: 16px;">Applies sustained workloads to verify system stability. GPU uses DirectX rendering, CPU uses multi-threaded computation, Combined runs both simultaneously.</p>
                         
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px; flex-wrap:wrap; gap:10px;">
                             <div style="display:flex; align-items:center; gap: 14px; flex-wrap:wrap;">
+                                <label style="font-size:11px; font-weight:700; color:var(--text-muted); letter-spacing:1px;">TEST MODE</label>
+                                <select id="stressMode" style="background:rgba(100,150,255,0.1); color:#88bbff; border:1px solid rgba(100,150,255,0.3); padding:8px; border-radius:6px; outline:none; font-family:inherit; font-weight: 600;">
+                                    <option value="gpu">GPU Only</option>
+                                    <option value="cpu">CPU Only</option>
+                                    <option value="combined" selected>CPU + GPU Combined</option>
+                                </select>
                                 <label style="font-size:11px; font-weight:700; color:var(--text-muted); letter-spacing:1px;">DURATION</label>
                                 <select id="stressDuration" style="background:rgba(255,255,255,0.05); color:white; border:1px solid rgba(255,255,255,0.1); padding:8px; border-radius:6px; outline:none; font-family:inherit;">
                                     <option value="15">15 Seconds (Quick)</option>
                                     <option value="60">60 Seconds (Standard)</option>
                                     <option value="300">5 Minutes (Burn-in)</option>
+                                    <option value="600">10 Minutes (Endurance)</option>
                                 </select>
-                                <label style="font-size:11px; font-weight:700; color:var(--text-muted); letter-spacing:1px; margin-left:6px;">KILL-SWITCH LIMIT</label>
+                                <label style="font-size:11px; font-weight:700; color:var(--text-muted); letter-spacing:1px;">KILL-SWITCH</label>
                                 <select id="stressMaxTemp" style="background:rgba(255,10,10,0.1); color:#ff6677; border:1px solid rgba(255,80,80,0.3); padding:8px; border-radius:6px; outline:none; font-family:inherit; font-weight: 600;">
-                                    <option value="75">75°C (Cool)</option>
-                                    <option value="80">80°C (Safe)</option>
-                                    <option value="85" selected>85°C (Standard)</option>
-                                    <option value="90">90°C (Aggressive)</option>
-                                    <option value="95">95°C (Redline)</option>
+                                    <option value="75">75C (Cool)</option>
+                                    <option value="80">80C (Safe)</option>
+                                    <option value="85" selected>85C (Standard)</option>
+                                    <option value="90">90C (Aggressive)</option>
+                                    <option value="95">95C (Redline)</option>
                                 </select>
                             </div>
-                            <button class="ai-scan-btn" id="startStressBtn" style="padding: 8px 18px; border-color: rgba(255,80,80,0.5); color: #ff8888;">🔥 Ignite Burn-In Workload</button>
+                            <button class="ai-scan-btn" id="startStressBtn" style="padding: 8px 18px; border-color: rgba(255,80,80,0.5); color: #ff8888;">Ignite Burn-In</button>
                         </div>
                         <div id="stressProgressContainer" style="display:none; margin-bottom: 12px;">
                             <div class="progress-bar" style="background: rgba(0,0,0,0.6);"><div class="fill" id="stressProgressBar" style="width:0%; background: linear-gradient(90deg, #ff4444, #ff8800);"></div></div>
                         </div>
                         <p id="stressStatusMsg" style="margin:4px 0 0 0; font-size: 13px; color: var(--accent-main); font-weight:500;">Ready</p>
+                        
+                        <!-- Detailed Telemetry Panel (shown after test completes or during test) -->
+                        <div id="stressTelemetryPanel" style="display:none; margin-top:16px; padding:14px; background:rgba(0,0,0,0.3); border-radius:8px; border:1px solid rgba(255,255,255,0.06);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                                <span style="font-size:12px; font-weight:700; color:var(--text-muted); letter-spacing:1px;">DETAILED TELEMETRY</span>
+                                <span id="stressGradeBadge" style="display:none; padding:3px 10px; border-radius:4px; font-weight:800; font-size:13px; letter-spacing:1px;"></span>
+                            </div>
+                            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:10px;">
+                                <!-- GPU telemetry -->
+                                <div id="telemetryGpuSection">
+                                    <div style="font-size:10px; font-weight:700; color:#ff8844; letter-spacing:1px; margin-bottom:6px;">GPU</div>
+                                    <div class="telemetry-row"><span>Max Temp</span><span id="telGpuMaxTemp">--</span></div>
+                                    <div class="telemetry-row"><span>Avg Temp</span><span id="telGpuAvgTemp">--</span></div>
+                                    <div class="telemetry-row"><span>Min Temp</span><span id="telGpuMinTemp">--</span></div>
+                                    <div class="telemetry-row"><span>Max Clock</span><span id="telGpuMaxClock">--</span></div>
+                                    <div class="telemetry-row"><span>Avg Clock</span><span id="telGpuAvgClock">--</span></div>
+                                    <div class="telemetry-row"><span>Max Power</span><span id="telGpuMaxPower">--</span></div>
+                                    <div class="telemetry-row"><span>Avg Power</span><span id="telGpuAvgPower">--</span></div>
+                                    <div class="telemetry-row"><span>Max Fan</span><span id="telGpuMaxFan">--</span></div>
+                                    <div class="telemetry-row"><span>Max VRAM</span><span id="telGpuMaxVram">--</span></div>
+                                    <div class="telemetry-row"><span>Throttles</span><span id="telGpuThrottles">--</span></div>
+                                </div>
+                                <!-- CPU telemetry -->
+                                <div id="telemetryCpuSection">
+                                    <div style="font-size:10px; font-weight:700; color:#4488ff; letter-spacing:1px; margin-bottom:6px;">CPU</div>
+                                    <div class="telemetry-row"><span>Max Temp</span><span id="telCpuMaxTemp">--</span></div>
+                                    <div class="telemetry-row"><span>Avg Temp</span><span id="telCpuAvgTemp">--</span></div>
+                                    <div class="telemetry-row"><span>Min Temp</span><span id="telCpuMinTemp">--</span></div>
+                                    <div class="telemetry-row"><span>Max Clock</span><span id="telCpuMaxClock">--</span></div>
+                                    <div class="telemetry-row"><span>Avg Clock</span><span id="telCpuAvgClock">--</span></div>
+                                    <div class="telemetry-row"><span>Max Power</span><span id="telCpuMaxPower">--</span></div>
+                                    <div class="telemetry-row"><span>Avg Power</span><span id="telCpuAvgPower">--</span></div>
+                                    <div class="telemetry-row"><span>Throttles</span><span id="telCpuThrottles">--</span></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                 </div>

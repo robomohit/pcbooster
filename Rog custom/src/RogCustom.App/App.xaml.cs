@@ -41,6 +41,7 @@ public partial class App : Application
         services.AddSingleton<IModeOrchestrator, ModeOrchestrator>();
         services.AddSingleton<IGameDetectionService, GameDetectionService>();
         services.AddSingleton<IGpuStressTestService, GpuStressTestService>();
+        services.AddSingleton<ICpuStressTestService, CpuStressTestService>();
         services.AddSingleton<IProfileManagerService, ProfileManagerService>();
         services.AddSingleton<IGpuControlService>(sp =>
         {
