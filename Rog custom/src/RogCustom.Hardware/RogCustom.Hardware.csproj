@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+
+
+  <PropertyGroup>
+
+    <TargetFramework>net8.0</TargetFramework>
+
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <Nullable>enable</Nullable>
+
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <RootNamespace>RogCustom.Hardware</RootNamespace>
+
+    <AssemblyName>RogCustom.Hardware</AssemblyName>
+
+  </PropertyGroup>
+
+
+
+  <ItemGroup>
+
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
+
+    <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />
+
+    <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="10.0.5" />
+
+  </ItemGroup>
+
+
+
+  <ItemGroup>
+
+    <ProjectReference Include="..\RogCustom.Core\RogCustom.Core.csproj" />
+
+  </ItemGroup>
+
+
+
+</Project>
+

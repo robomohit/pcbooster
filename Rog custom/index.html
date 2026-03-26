@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ROG Custom</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="mode-windows">
+    <!-- FX Canvas for starfield / particles -->
+    <canvas id="fx-canvas"></canvas>
+    <div class="ambient-glow"></div>
+
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo"><span class="rog">ROG</span> <span class="custom">CUSTOM</span></div>
+            <nav>
+                <button class="nav-btn active" data-section="dashboard">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+                    Dashboard
+                </button>
+                <button class="nav-btn" data-section="ai">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    AI Assistant
+                </button>
+                <button class="nav-btn" data-section="oc">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    Overclock
+                </button>
+                <button class="nav-btn" data-section="fans">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 12L7 7M12 12l5-5M12 12l-5 5M12 12l5 5"/></svg>
+                    Fan Curves
+                </button>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content">
+            <!-- Mode Selector -->
+            <header class="top-bar" style="display:flex; justify-content:space-between; align-items:center;">
+                <div class="mode-selector">
+                    <button class="mode-btn" data-mode="Silent">
+                        <span class="mode-icon">❄️</span>
+                        <div class="mode-text"><strong>SILENT</strong><small>Cool & Quiet</small></div>
+                    </button>
+                    <button class="mode-btn active" data-mode="Windows">
+                        <span class="mode-icon">🖥️</span>
+                        <div class="mode-text"><strong>WINDOWS</strong><small>System Default</small></div>
+                    </button>
+                    <button class="mode-btn" data-mode="Balanced">
+                        <span class="mode-icon">⚖️</span>
+                        <div class="mode-text"><strong>BALANCED</strong><small>Everyday</small></div>
+                    </button>
+                    <button class="mode-btn" data-mode="Performance">
+                        <span class="mode-icon">⚡</span>
+                        <div class="mode-text"><strong>PERFORMANCE</strong><small>High FPS</small></div>
+                    </button>
+                    <button class="mode-btn" data-mode="Turbo">
+                        <span class="mode-icon">🚀</span>
+                        <div class="mode-text"><strong>TURBO</strong><small>Warp Speed</small></div>
+                    </button>
+                </div>
+                <!-- Game Auto-Detection Toggle -->
+                <div style="margin-right:24px;">
+                    <button id="autoSwitchBtn" class="ai-scan-btn" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted);">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Auto-Game: OFF
+                    </button>
+                </div>
+            </header>
+
+            <!-- Dashboard -->
+            <div id="section-dashboard" class="section active">
+                
+                <!-- Live Performance Graph -->
+                <div class="stat-card" style="margin-bottom: 20px; padding: 16px 24px;">
+                    <div class="card-header">
+                        <h3>LIVE PERFORMANCE TELEMETRY<span class="model-name">Last 60 Seconds</span></h3>
+                    </div>
+                    <div style="width: 100%; height: 160px; position: relative;">
+                        <canvas id="liveStatsCanvas" style="width:100%; height:100%; border-radius: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05);"></canvas>
+                    </div>
+                    <div style="display:flex; justify-content:center; gap: 24px; margin-top: 12px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;">
+                        <span style="color: #ff4444;">● CPU Temp (°C)</span>
+                        <span style="color: #44ff88;">● GPU Temp (°C)</span>
+                        <span style="color: #00d4ff;">● GPU Usage (%)</span>
+                        <span style="color: #ff8800;">● CPU Usage (%)</span>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <!-- CPU -->
+                    <div class="stat-card">
+                        <div class="card-header">
+                            <h3>CPU<span class="model-name">Real-Time Core</span></h3>
+                            <div class="temp-badge"><span id="cpuTemp">--</span>°C</div>
+                        </div>
+                        <div class="metrics">
+                            <div class="metric">
+                                <label>USAGE</label>
+                                <div class="value"><span id="cpuUsage">--</span>%</div>
+                                <div class="progress-bar"><div class="fill" id="cpuUsageBar" style="width:0%"></div></div>
+                            </div>
+                            <div class="metric">
+                                <label>POWER DRAW</label>
+                                <div class="value"><span id="cpuPower">--</span>W</div>
+                                <div class="progress-bar orange"><div class="fill" id="cpuPowerBar" style="width:0%"></div></div>
+                            </div>
+                            <div class="metric-row">
+                                <div class="sub-metric"><label>FAN</label><span id="cpuFan">-- RPM</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- GPU -->
+                    <div class="stat-card">
+                        <div class="card-header">
+                            <h3>GPU<span class="model-name" id="gpuNameDisplay">Detecting...</span></h3>
+                            <div class="temp-badge"><span id="gpuTemp">--</span>°C</div>
+                        </div>
+                        <div class="metrics">
+                            <div class="metric">
+                                <label>USAGE</label>
+                                <div class="value"><span id="gpuUsage">--</span>%</div>
+                                <div class="progress-bar"><div class="fill" id="gpuUsageBar" style="width:0%"></div></div>
+                            </div>
+                            <div class="metric">
+                                <label>POWER DRAW</label>
+                                <div class="value"><span id="gpuPower">--</span>W</div>
+                                <div class="progress-bar red"><div class="fill" id="gpuPowerBar" style="width:0%"></div></div>
+                            </div>
+                            <div class="metric">
+                                <label>VRAM ALLOCATION</label>
+                                <div class="value"><span id="gpuVram">--</span>%</div>
+                                <div class="progress-bar purple"><div class="fill" id="gpuVramBar" style="width:0%"></div></div>
+                            </div>
+                            <div class="metric-row">
+                                <div class="sub-metric"><label>FAN</label><span id="gpuFan">-- RPM</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RAM -->
+                    <div class="stat-card">
+                        <div class="card-header"><h3>SYSTEM MEMORY</h3></div>
+                        <div class="metrics">
+                            <div class="metric">
+                                <label>RAM USAGE</label>
+                                <div class="value"><span id="ramUsage">--</span>%</div>
+                                <div class="progress-bar green"><div class="fill" id="ramUsageBar" style="width:0%"></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Assistant Section (unchanged — kept from earlier) -->
+            <div id="section-ai" class="section">
+                <div class="ai-chat-container">
+                    <div class="ai-chat-header">
+                        <div class="ai-avatar">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/><circle cx="12" cy="8" r="1" fill="currentColor"/></svg>
+                        </div>
+                        <div>
+                            <div class="ai-name">RIG<span style="color:var(--accent-main)">AI</span></div>
+                            <div class="ai-subtitle">Powered by Llama 3.3 · Reads your live PC stats</div>
+                        </div>
+                        <button class="ai-scan-btn" id="scanBtn" title="Analyse my PC now">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            Analyse PC
+                        </button>
+                    </div>
+
+                    <div class="ai-messages" id="aiMessages">
+                        <div class="ai-msg assistant">
+                            <div class="msg-bubble">Hey! I'm RIGAI, your personal PC optimizer. Hit <strong>Analyse PC</strong> to let me look at your live stats, or just ask me anything — like "why is my CPU hot?" or "how do I free up RAM?"</div>
+                        </div>
+                    </div>
+
+                    <div class="ai-quick-chips">
+                        <button class="chip" data-prompt="Analyse my PC right now and tell me what to improve">🔍 Quick Scan</button>
+                        <button class="chip" data-prompt="My CPU is running hot. What should I do?">🌡️ CPU too hot</button>
+                        <button class="chip" data-prompt="How can I free up RAM on Windows right now?">💾 Free RAM</button>
+                        <button class="chip" data-prompt="Which mode should I use for gaming right now based on my current stats?">🎮 Best gaming mode</button>
+                        <button class="chip" data-prompt="What processes or apps should I close to boost performance?">❌ Close what?</button>
+                        <button class="chip" data-prompt="Look at my GPU stats and recommend a safe overclock for my GPU (core and memory clocks). Be conservative.">🔧 AI OC My GPU</button>
+                    </div>
+
+                    <div class="ai-input-row">
+                        <input type="text" id="aiInput" class="ai-input" placeholder="Ask about your PC…" autocomplete="off"/>
+                        <button class="ai-send-btn" id="aiSend">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Overclock Section -->
+            <div id="section-oc" class="section">
+                <div class="stats-grid">
+                    <div class="stat-card" style="grid-column: 1 / -1;">
+                        <div class="card-header">
+                            <h3>GPU OVERCLOCK<span class="model-name" id="ocGpuName">Loading...</span></h3>
+                            <button class="ai-scan-btn" id="resetOcBtn" style="background: rgba(255,42,68,0.2); box-shadow: none; border: 1px solid rgba(255,42,68,0.4); color: #ff6677;">
+                                ↩ Reset All
+                            </button>
+                        </div>
+                        <p id="ocUnsupported" style="color:var(--text-muted); display:none;">NVIDIA GPU not detected. OC controls require an NVIDIA GPU with nvidia-smi.</p>
+                        
+                        <!-- Profile Manager UI -->
+                        <div style="margin-bottom: 24px; padding: 16px; background: rgba(255,136,0,0.05); border: 1px solid rgba(255,136,0,0.2); border-radius: 12px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <div>
+                                    <h4 style="margin:0; font-size: 13px; color: #ffaa00; display:flex; align-items:center; gap: 8px;">
+                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                                        CUSTOM PROFILES
+                                    </h4>
+                                    <p style="margin:4px 0 0 0; font-size: 11px; color: var(--text-muted);">Save and load persistent tuning presets.</p>
+                                </div>
+                                <div style="display:flex; gap: 10px; align-items: center;">
+                                    <select id="profileSelect" style="background:rgba(255,255,255,0.05); color:white; border:1px solid rgba(255,255,255,0.1); padding:6px 10px; border-radius:6px; outline:none; font-family:inherit; font-size: 12px; min-width: 140px;">
+                                        <option value="">Select Profile...</option>
+                                    </select>
+                                    <button class="ai-scan-btn" id="loadProfileBtn" style="padding: 6px 14px; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2);">Load</button>
+                                    <button class="ai-scan-btn" id="saveProfileBtn" style="padding: 6px 14px; background: rgba(255,136,0,0.2); border-color: rgba(255,136,0,0.5); color: #ffaa00;">Save Current</button>
+                                    <button class="ai-scan-btn" id="deleteProfileBtn" style="padding: 6px 10px; background: rgba(255,42,68,0.2); border-color: rgba(255,42,68,0.4); color: #ff6677;" title="Delete Profile">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- AI OC Scanner UI -->
+                        <div id="ocScannerUi" style="margin-bottom: 24px; padding: 16px; background: rgba(0,212,255,0.05); border: 1px solid rgba(0,212,255,0.2); border-radius: 12px; display: none;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+                                <div>
+                                    <h4 style="margin:0; font-size: 13px; color: var(--accent-main); display:flex; align-items:center; gap: 8px;">
+                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                                        AUTO-TUNING (OC SCANNER)
+                                    </h4>
+                                    <p id="ocScanStatusMsg" style="margin:4px 0 0 0; font-size: 11px; color: var(--text-muted);">Find the optimal clock curve for your silicon.</p>
+                                </div>
+                                <button class="ai-scan-btn" id="startOcScanBtn" style="padding: 6px 14px;">Start Scan</button>
+                                <button class="ai-scan-btn" id="cancelOcScanBtn" style="padding: 6px 14px; background: rgba(255,42,68,0.2); border: 1px solid rgba(255,42,68,0.5); display: none;">Cancel</button>
+                            </div>
+                            <div id="ocScanProgressContainer" style="display:none;">
+                                <div class="progress-bar orange" style="background: rgba(0,0,0,0.6);"><div class="fill" id="ocScanProgressBar" style="width:0%"></div></div>
+                            </div>
+                        </div>
+
+                        <div id="ocControls" class="metrics" style="gap: 28px;">
+                            <!-- Core Clock -->
+                            <div class="metric">
+                                <label>GPU CORE CLOCK LOCK (MAX +100MHz)</label>
+                                <div style="display:flex; align-items:center; gap:14px;">
+                                    <input type="range" class="oc-slider" id="ocCoreSlider" min="300" max="2500" step="15"/>
+                                    <span class="oc-value" id="ocCoreVal">-- MHz</span>
+                                </div>
+                                <button class="oc-apply-btn" id="applyCoreBtn">Apply Core Clock</button>
+                            </div>
+                            <!-- Memory Clock -->
+                            <div class="metric">
+                                <label>GPU MEMORY CLOCK LOCK (MAX +300MHz)</label>
+                                <div style="display:flex; align-items:center; gap:14px;">
+                                    <input type="range" class="oc-slider" id="ocMemSlider" min="300" max="12000" step="25"/>
+                                    <span class="oc-value" id="ocMemVal">-- MHz</span>
+                                </div>
+                                <button class="oc-apply-btn" id="applyMemBtn">Apply Memory Clock</button>
+                            </div>
+                            <!-- Power Limit -->
+                            <div class="metric">
+                                <label>GPU POWER LIMIT</label>
+                                <div style="display:flex; align-items:center; gap:14px;">
+                                    <input type="range" class="oc-slider" id="ocPowerSlider" min="50" max="150" step="1"/>
+                                    <span class="oc-value" id="ocPowerVal">-- %</span>
+                                </div>
+                                <button class="oc-apply-btn" id="applyPowerBtn">Apply Power Limit</button>
+                            </div>
+                            <p style="color: var(--text-muted); font-size: 11px; margin-top: 8px;">⚠️ Hard safety caps enforced: Core max +100MHz above default, Memory max +300MHz above default. All overclocks are automatically reset when the app closes.</p>
+                        </div>
+                    </div>
+
+                    <!-- GPU Stress Test Card -->
+                    <div class="stat-card" style="grid-column: 1 / -1;">
+                        <div class="card-header">
+                            <h3>GPU BURN-IN (STRESS TEST)<span class="model-name">Thermal & Stability validation</span></h3>
+                            <button class="ai-scan-btn" id="cancelStressBtn" style="background: rgba(255,42,68,0.2); border: 1px solid rgba(255,42,68,0.5); color: #ff6677; display:none;">
+                                🛑 Stop Test
+                            </button>
+                        </div>
+                        <p style="color:var(--text-muted); font-size:12px; margin-top: 0; margin-bottom: 16px;">Applies a sustained DirectX rendering workload to verify if your current Overclock is stable and monitors for physical thermal throttling.</p>
+                        
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
+                            <div style="display:flex; align-items:center; gap: 14px; flex-wrap:wrap;">
+                                <label style="font-size:11px; font-weight:700; color:var(--text-muted); letter-spacing:1px;">DURATION</label>
+                                <select id="stressDuration" style="background:rgba(255,255,255,0.05); color:white; border:1px solid rgba(255,255,255,0.1); padding:8px; border-radius:6px; outline:none; font-family:inherit;">
+                                    <option value="15">15 Seconds (Quick)</option>
+                                    <option value="60">60 Seconds (Standard)</option>
+                                    <option value="300">5 Minutes (Burn-in)</option>
+                                </select>
+                                <label style="font-size:11px; font-weight:700; color:var(--text-muted); letter-spacing:1px; margin-left:6px;">KILL-SWITCH LIMIT</label>
+                                <select id="stressMaxTemp" style="background:rgba(255,10,10,0.1); color:#ff6677; border:1px solid rgba(255,80,80,0.3); padding:8px; border-radius:6px; outline:none; font-family:inherit; font-weight: 600;">
+                                    <option value="75">75°C (Cool)</option>
+                                    <option value="80">80°C (Safe)</option>
+                                    <option value="85" selected>85°C (Standard)</option>
+                                    <option value="90">90°C (Aggressive)</option>
+                                    <option value="95">95°C (Redline)</option>
+                                </select>
+                            </div>
+                            <button class="ai-scan-btn" id="startStressBtn" style="padding: 8px 18px; border-color: rgba(255,80,80,0.5); color: #ff8888;">🔥 Ignite Burn-In Workload</button>
+                        </div>
+                        <div id="stressProgressContainer" style="display:none; margin-bottom: 12px;">
+                            <div class="progress-bar" style="background: rgba(0,0,0,0.6);"><div class="fill" id="stressProgressBar" style="width:0%; background: linear-gradient(90deg, #ff4444, #ff8800);"></div></div>
+                        </div>
+                        <p id="stressStatusMsg" style="margin:4px 0 0 0; font-size: 13px; color: var(--accent-main); font-weight:500;">Ready</p>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Fans Section -->
+            <div id="section-fans" class="section">
+                <div class="stats-grid">
+                    <div class="stat-card" style="grid-column: 1 / -1; padding-bottom: 30px;">
+                        <div class="card-header">
+                            <h3>FAN CURVE EDITOR<span class="model-name">System Thermal Response</span></h3>
+                            <button class="ai-scan-btn" id="applyFanCurveBtn">Save & Apply Profile</button>
+                        </div>
+                        <div style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; height: 350px; position: relative;">
+                            <canvas id="fanCurveCanvas" width="800" height="350" style="width: 100%; height: 100%; cursor: crosshair;"></canvas>
+                        </div>
+                        <p style="color: var(--text-muted); font-size: 11px; margin-top: 16px;">Drag the control points to adjust the fan speed percentage (Y-axis) relative to temperature (X-axis). Curve is processed by the FanControl integration bridge.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Mode Status Toast -->
+    <div class="mode-status" id="modeStatus"></div>
+    <div id="errorToast" class="error-toast"></div>
+    <div id="safetyToast" class="error-toast" style="top: 80px; background: rgba(255,136,0,0.9); border-left: 4px solid #fff;"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>

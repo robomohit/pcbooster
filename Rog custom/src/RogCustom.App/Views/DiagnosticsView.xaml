@@ -1,0 +1,51 @@
+<UserControl x:Class="RogCustom.App.Views.DiagnosticsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <StackPanel>
+        <TextBlock Text="DIAGNOSTICS" FontSize="11" FontWeight="Bold" Foreground="{StaticResource ForegroundDimBrush}" Margin="0,0,0,4"/>
+        <TextBlock Text="Hardware sensors and bindings" FontSize="16" FontWeight="Light" Foreground="{StaticResource ForegroundLightBrush}" Margin="0,0,0,20"/>
+
+        <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="4" Padding="14,10" Margin="0,0,0,16"
+                BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Last updated: " Foreground="{StaticResource ForegroundMutedBrush}" FontSize="12"/>
+                <TextBlock Text="{Binding LastUpdated}" Foreground="{StaticResource ForegroundLightBrush}" FontSize="12" Margin="0,0,16,0"/>
+                <TextBlock Text="Limited: " Foreground="{StaticResource ForegroundMutedBrush}" FontSize="12"/>
+                <TextBlock Text="{Binding IsLimitedMode}" Foreground="{StaticResource AccentOrangeBrush}" FontSize="12"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Bindings -->
+        <TextBlock Text="SENSOR BINDINGS" FontSize="10" FontWeight="Bold" Foreground="{StaticResource ForegroundMutedBrush}" Margin="0,0,0,8"/>
+        <DataGrid ItemsSource="{Binding Bindings}" AutoGenerateColumns="False" IsReadOnly="True"
+                  Margin="0,0,0,24" MaxHeight="300">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Role" Binding="{Binding Role}" Width="160"/>
+                <DataGridTextColumn Header="Hardware" Binding="{Binding Hardware}" Width="*"/>
+                <DataGridTextColumn Header="Sensor Type" Binding="{Binding SensorType}" Width="110"/>
+                <DataGridTextColumn Header="Sensor" Binding="{Binding SensorName}" Width="*"/>
+                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="110"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Raw Sensors -->
+        <TextBlock Text="RAW SENSORS" FontSize="10" FontWeight="Bold" Foreground="{StaticResource ForegroundMutedBrush}" Margin="0,0,0,8"/>
+        <DataGrid ItemsSource="{Binding Sensors}" AutoGenerateColumns="False" IsReadOnly="True"
+                  Margin="0,0,0,20" MaxHeight="400">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="HW Type" Binding="{Binding HwType}" Width="120"/>
+                <DataGridTextColumn Header="Hardware" Binding="{Binding HwName}" Width="*"/>
+                <DataGridTextColumn Header="Sensor Type" Binding="{Binding SensorType}" Width="110"/>
+                <DataGridTextColumn Header="Sensor" Binding="{Binding SensorName}" Width="*"/>
+                <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="100"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <StackPanel Orientation="Horizontal">
+            <Button Content="REFRESH" Padding="16,10" Margin="0,0,10,0" Click="Refresh_Click"/>
+            <Button Content="REBIND SENSORS" Padding="16,10" Click="Rebind_Click"/>
+        </StackPanel>
+    </StackPanel>
+    </ScrollViewer>
+</UserControl>

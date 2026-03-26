@@ -1,0 +1,69 @@
+# .NET / Visual Studio
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+.DS_Store
+.vs/
+*.vcxproj.user
+*.vcxproj.filters
+*.db
+*.opendb
+*.pdb
+*.cache
+*.log
+*.tlog
+*.vspscc
+*.vssscc
+$tf/
+
+# Rider
+.idea/
+*.sublime-*
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# VS Code
+.vscode/
+
+# WebView2
+*WebView2*
+EBWebView/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Misc
+*.rsuser
+*.pidb
+*.meta
+*.swp
+*.swo
+*.orig
+*.rej
+.cr/
+.pak

@@ -1,0 +1,387 @@
+<UserControl x:Class="RogCustom.App.Views.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Unloaded="DashboardView_Unloaded">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="B2V"/>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Margin="0,0,10,0">
+        <!-- Error Banner -->
+        <Border Background="{StaticResource ErrorBannerBrush}" Padding="14,10" Margin="0,0,0,12" CornerRadius="4"
+                BorderBrush="{StaticResource AccentRedBrush}" BorderThickness="1,0,0,0"
+                Visibility="{Binding LastError, Converter={StaticResource StringToVisibility}}">
+            <TextBlock Foreground="{StaticResource ForegroundLightBrush}" TextWrapping="Wrap" Text="{Binding LastError}"/>
+        </Border>
+
+        <!-- Limited Mode -->
+        <Border Background="#20FF8800" Padding="14,10" Margin="0,0,0,12" CornerRadius="4"
+                BorderBrush="{StaticResource AccentOrangeBrush}" BorderThickness="1,0,0,0"
+                Visibility="{Binding IsLimitedMode, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock Foreground="{StaticResource AccentOrangeBrush}" TextWrapping="Wrap"
+                       Text="Limited Mode — Hardware driver unavailable. Power plan control only."/>
+        </Border>
+
+        <!-- ═══ SYSTEM INFO HEADER ═══ -->
+        <Border Background="{StaticResource BackgroundCardBrush}" CornerRadius="6" Padding="20,16" Margin="0,0,0,20"
+                BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="SYSTEM OVERVIEW" FontSize="10" FontWeight="Bold" Foreground="{StaticResource ForegroundDimBrush}" Margin="0,0,0,6"/>
+                    <TextBlock Text="{Binding GpuName}" FontSize="16" FontWeight="Light" Foreground="{StaticResource ForegroundLightBrush}"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <Border Background="{StaticResource AccentDimBrush}" CornerRadius="3" Padding="10,4">
+                        <TextBlock Text="{Binding CurrentModeName}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentBrush}"/>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ═══ PERFORMANCE MODE SELECTOR ═══ -->
+        <TextBlock Text="PERFORMANCE MODE" FontSize="10" FontWeight="Bold" Foreground="{StaticResource ForegroundDimBrush}" Margin="0,0,0,10"/>
+        <UniformGrid Rows="1" Columns="6" Margin="0,0,0,24">
+            <!-- SILENT -->
+            <Button Margin="0,0,4,0" Click="ModeSilent_Click">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource AcModeButton}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsSilentActive}" Value="True">
+                                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                <Setter Property="Background">
+                                    <Setter.Value>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                            <GradientStop Color="#1800D4FF" Offset="0"/>
+                                            <GradientStop Color="#0800D4FF" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+                <StackPanel>
+                    <TextBlock Text="SILENT" FontSize="12" FontWeight="Bold" HorizontalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{StaticResource ForegroundLightBrush}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsSilentActive}" Value="True">
+                                        <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Text="Low noise" FontSize="9" Foreground="{StaticResource ForegroundMutedBrush}" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                </StackPanel>
+            </Button>
+            <!-- WINDOWS -->
+            <Button Margin="2,0,2,0" Click="ModeWindows_Click">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource AcModeButton}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsWindowsActive}" Value="True">
+                                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                <Setter Property="Background">
+                                    <Setter.Value>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                            <GradientStop Color="#1800D4FF" Offset="0"/>
+                                            <GradientStop Color="#0800D4FF" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+                <StackPanel>
+                    <TextBlock Text="WINDOWS" FontSize="12" FontWeight="Bold" HorizontalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{StaticResource ForegroundLightBrush}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsWindowsActive}" Value="True">
+                                        <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Text="Your plan" FontSize="9" Foreground="{StaticResource ForegroundMutedBrush}" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                </StackPanel>
+            </Button>
+            <!-- BALANCED -->
+            <Button Margin="2,0,2,0" Click="ModeBalanced_Click">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource AcModeButton}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsBalancedActive}" Value="True">
+                                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                <Setter Property="Background">
+                                    <Setter.Value>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                            <GradientStop Color="#1800D4FF" Offset="0"/>
+                                            <GradientStop Color="#0800D4FF" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+                <StackPanel>
+                    <TextBlock Text="BALANCED" FontSize="12" FontWeight="Bold" HorizontalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{StaticResource ForegroundLightBrush}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsBalancedActive}" Value="True">
+                                        <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Text="Everyday" FontSize="9" Foreground="{StaticResource ForegroundMutedBrush}" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                </StackPanel>
+            </Button>
+            <!-- PERFORMANCE -->
+            <Button Margin="2,0,2,0" Click="ModePerformance_Click">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource AcModeButton}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsPerformanceActive}" Value="True">
+                                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                <Setter Property="Background">
+                                    <Setter.Value>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                            <GradientStop Color="#1800D4FF" Offset="0"/>
+                                            <GradientStop Color="#0800D4FF" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+                <StackPanel>
+                    <TextBlock Text="PERFORMANCE" FontSize="12" FontWeight="Bold" HorizontalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{StaticResource ForegroundLightBrush}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsPerformanceActive}" Value="True">
+                                        <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Text="Gaming" FontSize="9" Foreground="{StaticResource ForegroundMutedBrush}" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                </StackPanel>
+            </Button>
+            <!-- TURBO -->
+            <Button Margin="2,0,2,0" Click="ModeTurbo_Click">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource AcModeButton}">
+                        <Setter Property="BorderBrush" Value="{StaticResource AccentRedBrush}"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsTurboActive}" Value="True">
+                                <Setter Property="BorderBrush" Value="{StaticResource AccentRedBrush}"/>
+                                <Setter Property="Background">
+                                    <Setter.Value>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                            <GradientStop Color="#18FF3344" Offset="0"/>
+                                            <GradientStop Color="#08FF3344" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+                <StackPanel>
+                    <TextBlock Text="TURBO" FontSize="12" FontWeight="Bold" HorizontalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{StaticResource AccentRedBrush}"/>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Text="Max power" FontSize="9" Foreground="{StaticResource ForegroundMutedBrush}" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                </StackPanel>
+            </Button>
+            <!-- MANUAL -->
+            <Button Margin="4,0,0,0" Click="ModeManual_Click">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource AcModeButton}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsManualActive}" Value="True">
+                                <Setter Property="BorderBrush" Value="{StaticResource AccentOrangeBrush}"/>
+                                <Setter Property="Background">
+                                    <Setter.Value>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                            <GradientStop Color="#18FF8800" Offset="0"/>
+                                            <GradientStop Color="#08FF8800" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+                <StackPanel>
+                    <TextBlock Text="MANUAL" FontSize="12" FontWeight="Bold" HorizontalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{StaticResource ForegroundLightBrush}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsManualActive}" Value="True">
+                                        <Setter Property="Foreground" Value="{StaticResource AccentOrangeBrush}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Text="Custom" FontSize="9" Foreground="{StaticResource ForegroundMutedBrush}" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                </StackPanel>
+            </Button>
+        </UniformGrid>
+
+        <!-- ═══ CPU SECTION ═══ -->
+        <TextBlock Text="CPU" FontSize="11" FontWeight="Bold" Foreground="{StaticResource ForegroundDimBrush}" Margin="0,0,0,8"/>
+        <UniformGrid Rows="1" Margin="0,0,0,16">
+            <!-- CPU Temp -->
+            <Border Background="{StaticResource BackgroundCardBrush}" BorderBrush="{StaticResource BorderSubtleBrush}"
+                    BorderThickness="1" CornerRadius="5" Padding="14,12" Margin="0,0,6,0">
+                <StackPanel>
+                    <TextBlock Text="TEMPERATURE" FontSize="9" Foreground="{StaticResource ForegroundDimBrush}" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding CpuPackageTemp}" FontSize="26" FontWeight="Light" Foreground="{StaticResource ForegroundLightBrush}" Margin="0,6,0,6"/>
+                    <ProgressBar Style="{StaticResource AcProgressBar}" Value="{Binding CpuTempValue, Mode=OneWay}" Maximum="100"/>
+                </StackPanel>
+            </Border>
+            <!-- CPU Usage -->
+            <Border Background="{StaticResource BackgroundCardBrush}" BorderBrush="{StaticResource BorderSubtleBrush}"
+                    BorderThickness="1" CornerRadius="5" Padding="14,12" Margin="3,0,3,0">
+                <StackPanel>
+                    <TextBlock Text="USAGE" FontSize="9" Foreground="{StaticResource ForegroundDimBrush}" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding CpuUsage}" FontSize="26" FontWeight="Light" Foreground="{StaticResource ForegroundLightBrush}" Margin="0,6,0,6"/>
+                    <ProgressBar Style="{StaticResource AcProgressBarTeal}" Value="{Binding CpuUsageValue, Mode=OneWay}" Maximum="100"/>
+                </StackPanel>
+            </Border>
+            <!-- CPU Clock -->
+            <Border Background="{StaticResource BackgroundCardBrush}" BorderBrush="{StaticResource BorderSubtleBrush}"
+                    BorderThickness="1" CornerRadius="5" Padding="14,12" Margin="3,0,3,0">
+                <StackPanel>
+                    <TextBlock Text="CLOCK" FontSize="9" Foreground="{StaticResource ForegroundDimBrush}" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding CpuClock}" FontSize="26" FontWeight="Light" Foreground="{StaticResource ForegroundLightBrush}" Margin="0,6,0,0"/>
+                </StackPanel>
+            </Border>
+            <!-- CPU Power -->
+            <Border Background="{StaticResource BackgroundCardBrush}" BorderBrush="{StaticResource BorderSubtleBrush}"
+                    BorderThickness="1" CornerRadius="5" Padding="14,12" Margin="3,0,3,0">
+                <StackPanel>
+                    <TextBlock Text="POWER" FontSize="9" Foreground="{StaticResource ForegroundDimBrush}" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding CpuPower}" FontSize="26" FontWeight="Light" Foreground="{StaticResource ForegroundLightBrush}" Margin="0,6,0,6"/>
+                    <ProgressBar Style="{StaticResource AcProgressBarOrange}" Value="{Binding CpuPowerValue, Mode=OneWay}" Maximum="200"/>
+                </StackPanel>
+            </Border>
+            <!-- CPU Fan -->
+            <Border Background="{StaticResource BackgroundCardBrush}" BorderBrush="{StaticResource BorderSubtleBrush}"
+                    BorderThickness="1" CornerRadius="5" Padding="14,12" Margin="6,0,0,0">
+                <StackPanel>
+                    <TextBlock Text="FAN" FontSize="9" Foreground="{StaticResource ForegroundDimBrush}" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding CpuFanRpm}" FontSize="26" FontWeight="Light" Foreground="{StaticResource ForegroundLightBrush}" Margin="0,6,0,0"/>
+                </StackPanel>
+            </Border>
+        </UniformGrid>
+
+        <!-- ═══ GPU SECTION ═══ -->
+        <TextBlock Text="GPU" FontSize="11" FontWeight="Bold" Foreground="{StaticResource ForegroundDimBrush}" Margin="0,4,0,8"/>
+        <!-- GPU Row 1: Temp / Usage / Core CLK / Mem CLK -->
+        <UniformGrid Rows="1" Margin="0,0,0,6">
+            <Border Background="{StaticResource BackgroundCardBrush}" BorderBrush="{StaticResource BorderSubtleBrush}"
+                    BorderThickness="1" CornerRadius="5" Padding="14,12" Margin="0,0,6,0">
+                <StackPanel>
+                    <TextBlock Text="TEMPERATURE" FontSize="9" Foreground="{StaticResource ForegroundDimBrush}" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding GpuCoreTemp}" FontSize="26" FontWeight="Light" Foreground="{StaticResource ForegroundLightBrush}" Margin="0,6,0,6"/>
+                    <ProgressBar Style="{StaticResource AcProgressBarRed}" Value="{Binding GpuTempValue, Mode=OneWay}" Maximum="100"/>
+                </StackPanel>
+            </Border>
+            <Border Background="{StaticResource BackgroundCardBrush}" BorderBrush="{StaticResource BorderSubtleBrush}"
+                    BorderThickness="1" CornerRadius="5" Padding="14,12" Margin="3,0,3,0">
+                <StackPanel>
+                    <TextBlock Text="USAGE" FontSize="9" Foreground="{StaticResource ForegroundDimBrush}" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding GpuUsage}" FontSize="26" FontWeight="Light" Foreground="{StaticResource ForegroundLightBrush}" Margin="0,6,0,6"/>
+                    <ProgressBar Style="{StaticResource AcProgressBarTeal}" Value="{Binding GpuUsageValue, Mode=OneWay}" Maximum="100"/>
+                </StackPanel>
+            </Border>
+            <Border Background="{StaticResource BackgroundCardBrush}" BorderBrush="{StaticResource BorderSubtleBrush}"
+                    BorderThickness="1" CornerRadius="5" Padding="14,12" Margin="3,0,3,0">
+                <StackPanel>
+                    <TextBlock Text="CORE CLK" FontSize="9" Foreground="{StaticResource ForegroundDimBrush}" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding GpuCoreClock}" FontSize="26" FontWeight="Light" Foreground="{StaticResource ForegroundLightBrush}" Margin="0,6,0,0"/>
+                </StackPanel>
+            </Border>
+            <Border Background="{StaticResource BackgroundCardBrush}" BorderBrush="{StaticResource BorderSubtleBrush}"
+                    BorderThickness="1" CornerRadius="5" Padding="14,12" Margin="6,0,0,0">
+                <StackPanel>
+                    <TextBlock Text="MEM CLK" FontSize="9" Foreground="{StaticResource ForegroundDimBrush}" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding GpuMemClock}" FontSize="26" FontWeight="Light" Foreground="{StaticResource ForegroundLightBrush}" Margin="0,6,0,0"/>
+                </StackPanel>
+            </Border>
+        </UniformGrid>
+        <!-- GPU Row 2: Power / VRAM / Fan -->
+        <UniformGrid Rows="1" Columns="4" Margin="0,0,0,16">
+            <Border Background="{StaticResource BackgroundCardBrush}" BorderBrush="{StaticResource BorderSubtleBrush}"
+                    BorderThickness="1" CornerRadius="5" Padding="14,12" Margin="0,0,6,0">
+                <StackPanel>
+                    <TextBlock Text="POWER" FontSize="9" Foreground="{StaticResource ForegroundDimBrush}" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding GpuPower}" FontSize="26" FontWeight="Light" Foreground="{StaticResource ForegroundLightBrush}" Margin="0,6,0,6"/>
+                    <ProgressBar Style="{StaticResource AcProgressBarOrange}" Value="{Binding GpuPowerValue, Mode=OneWay}" Maximum="300"/>
+                </StackPanel>
+            </Border>
+            <Border Background="{StaticResource BackgroundCardBrush}" BorderBrush="{StaticResource BorderSubtleBrush}"
+                    BorderThickness="1" CornerRadius="5" Padding="14,12" Margin="3,0,3,0">
+                <StackPanel>
+                    <TextBlock Text="VRAM" FontSize="9" Foreground="{StaticResource ForegroundDimBrush}" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding GpuVram}" FontSize="26" FontWeight="Light" Foreground="{StaticResource ForegroundLightBrush}" Margin="0,6,0,6"/>
+                    <ProgressBar Style="{StaticResource AcProgressBarGreen}" Value="{Binding GpuVramPercent, Mode=OneWay}" Maximum="100"/>
+                </StackPanel>
+            </Border>
+            <Border Background="{StaticResource BackgroundCardBrush}" BorderBrush="{StaticResource BorderSubtleBrush}"
+                    BorderThickness="1" CornerRadius="5" Padding="14,12" Margin="3,0,3,0">
+                <StackPanel>
+                    <TextBlock Text="FAN" FontSize="9" Foreground="{StaticResource ForegroundDimBrush}" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding GpuFanRpm}" FontSize="26" FontWeight="Light" Foreground="{StaticResource ForegroundLightBrush}" Margin="0,6,0,0"/>
+                </StackPanel>
+            </Border>
+            <Border Background="Transparent" Margin="6,0,0,0"/>
+        </UniformGrid>
+
+        <!-- ═══ MEMORY SECTION ═══ -->
+        <TextBlock Text="MEMORY" FontSize="11" FontWeight="Bold" Foreground="{StaticResource ForegroundDimBrush}" Margin="0,0,0,8"/>
+        <UniformGrid Rows="1" Columns="4" Margin="0,0,0,24">
+            <Border Background="{StaticResource BackgroundCardBrush}" BorderBrush="{StaticResource BorderSubtleBrush}"
+                    BorderThickness="1" CornerRadius="5" Padding="14,12" Margin="0,0,6,0">
+                <StackPanel>
+                    <TextBlock Text="RAM" FontSize="9" Foreground="{StaticResource ForegroundDimBrush}" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding RamUsage}" FontSize="26" FontWeight="Light" Foreground="{StaticResource ForegroundLightBrush}" Margin="0,6,0,6"/>
+                    <ProgressBar Style="{StaticResource AcProgressBarGreen}" Value="{Binding RamUsagePercent, Mode=OneWay}" Maximum="100"/>
+                </StackPanel>
+            </Border>
+            <Border Background="Transparent" Margin="3,0,3,0"/>
+            <Border Background="Transparent" Margin="3,0,3,0"/>
+            <Border Background="Transparent" Margin="6,0,0,0"/>
+        </UniformGrid>
+
+        <Button Content="REFRESH SENSORS" Padding="16,10" HorizontalAlignment="Left" Click="RefreshSensors_Click" Margin="0,0,0,20"/>
+    </StackPanel>
+    </ScrollViewer>
+</UserControl>

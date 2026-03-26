@@ -1,0 +1,10 @@
+<UserControl x:Class="RogCustom.App.Views.SimpleProfilesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <StackPanel Background="LightGray" Margin="10">
+        <TextBlock Text="PROFILES PAGE" FontSize="24" FontWeight="Bold" Foreground="Black" Margin="0,0,0,20"/>
+        <TextBlock Text="This is the Profiles configuration page." FontSize="14" Foreground="Black" Margin="0,0,0,10"/>
+        <Button Content="Restore Power Plan Defaults" Background="Blue" Foreground="White" Padding="20,10" FontSize="14"/>
+        <TextBlock Text="Click the button above to configure default power plans for Silent, Balanced, Performance, and Turbo modes." FontSize="12" Foreground="Black" Margin="0,20,0,0" TextWrapping="Wrap"/>
+    </StackPanel>
+</UserControl>
