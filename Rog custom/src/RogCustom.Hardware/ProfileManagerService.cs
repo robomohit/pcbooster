@@ -10,11 +10,12 @@ namespace RogCustom.Hardware;
 
 public class ProfileManagerService : IProfileManagerService
 {
+    // Use a separate file to avoid conflicting with ProfileStore's profiles.json
     private readonly string _profilesFilePath;
     private readonly IGpuControlService _gpuService;
     private readonly IFanBridgeService _fanService;
     private readonly ILogger<ProfileManagerService> _logger;
-    private List<PerformanceProfile> _profiles = new();
+    private List<GpuProfile> _profiles = new();
 
     public ProfileManagerService(IGpuControlService gpuService, IFanBridgeService fanService, ILogger<ProfileManagerService> logger)
     {
@@ -23,7 +24,7 @@ public class ProfileManagerService : IProfileManagerService
         _logger = logger;
         
         string configDir = ConfigPathHelper.GetConfigDirectory();
-        _profilesFilePath = Path.Combine(configDir, "profiles.json");
+        _profilesFilePath = Path.Combine(configDir, "gpu-profiles.json");
         
         LoadFromDisk();
     }
@@ -35,14 +36,19 @@ public class ProfileManagerService : IProfileManagerService
             if (File.Exists(_profilesFilePath))
             {
                 string json = File.ReadAllText(_profilesFilePath);
-                var loaded = JsonSerializer.Deserialize<List<PerformanceProfile>>(json);
+                var loaded = JsonSerializer.Deserialize<List<GpuProfile>>(json);
                 if (loaded != null) _profiles = loaded;
             }
         }
-        catch (Exception ex)
+        catch (JsonException ex)
         {
-            _logger.LogError(ex, "Failed to load performance profiles from disk.");
-            _profiles = new List<PerformanceProfile>();
+            _logger.LogError(ex, "Failed to parse GPU profiles JSON from disk.");
+            _profiles = new List<GpuProfile>();
+        }
+        catch (IOException ex)
+        {
+            _logger.LogError(ex, "Failed to read GPU profiles file from disk.");
+            _profiles = new List<GpuProfile>();
         }
     }
 
@@ -55,21 +61,21 @@ public class ProfileManagerService : IProfileManagerService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to write performance profiles to disk.");
+            _logger.LogError(ex, "Failed to write GPU profiles to disk.");
         }
     }
 
-    public IEnumerable<PerformanceProfile> GetProfiles()
+    public IEnumerable<GpuProfile> GetProfiles()
     {
         return _profiles.ToList();
     }
 
-    public PerformanceProfile? GetProfile(string id)
+    public GpuProfile? GetProfile(string id)
     {
         return _profiles.FirstOrDefault(p => p.Id == id);
     }
 
-    public void SaveProfile(PerformanceProfile profile)
+    public void SaveProfile(GpuProfile profile)
     {
         var existing = _profiles.FirstOrDefault(p => p.Id == profile.Id);
         if (existing != null)
@@ -94,13 +100,13 @@ public class ProfileManagerService : IProfileManagerService
         bool success = true;
 
         if (profile.CoreOffsetMhz.HasValue)
-            success &= _gpuService.ApplyGpuCoreClockOffset(profile.CoreOffsetMhz.Value).IsSuccess;
+            success &= _gpuService.LockGpuClocks(profile.CoreOffsetMhz.Value);
 
         if (profile.MemOffsetMhz.HasValue)
-            success &= _gpuService.ApplyGpuMemoryClockOffset(profile.MemOffsetMhz.Value).IsSuccess;
+            success &= _gpuService.LockMemoryClocks(profile.MemOffsetMhz.Value);
 
         if (profile.PowerLimitWatts.HasValue)
-            success &= _gpuService.ApplyGpuPowerLimit(profile.PowerLimitWatts.Value).IsSuccess;
+            success &= _gpuService.SetPowerLimit(profile.PowerLimitWatts.Value);
 
         if (!string.IsNullOrEmpty(profile.FanCurveJson))
             success &= _fanService.ApplyCustomCurve(profile.FanCurveJson);

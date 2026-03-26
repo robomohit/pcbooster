@@ -3,7 +3,11 @@ using System.Collections.Generic;
 
 namespace RogCustom.Hardware;
 
-public class PerformanceProfile
+/// <summary>
+/// A GPU overclocking / fan profile (distinct from RogCustom.Core.PerformanceProfile
+/// which handles system-wide mode settings and schema-versioned persistence).
+/// </summary>
+public class GpuProfile
 {
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
     public string Name { get; set; } = "New Profile";
@@ -15,9 +19,9 @@ public class PerformanceProfile
 
 public interface IProfileManagerService
 {
-    IEnumerable<PerformanceProfile> GetProfiles();
-    PerformanceProfile? GetProfile(string id);
-    void SaveProfile(PerformanceProfile profile);
+    IEnumerable<GpuProfile> GetProfiles();
+    GpuProfile? GetProfile(string id);
+    void SaveProfile(GpuProfile profile);
     void DeleteProfile(string id);
     bool ApplyProfile(string id);
 }

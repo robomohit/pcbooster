@@ -58,7 +58,7 @@ public partial class App : Application
             var capabilities = sp.GetRequiredService<IAppCapabilitiesService>();
             return new HardwareMonitor(logger, bindingLayer, capabilities);
         });
-        services.AddTransient<ViewModels.DashboardViewModel>();
+        services.AddSingleton<ViewModels.DashboardViewModel>();
         services.AddTransient<Views.DashboardView>(sp =>
         {
             var vm = sp.GetRequiredService<ViewModels.DashboardViewModel>();

@@ -24,6 +24,9 @@ $tf/
 .idea/
 *.sublime-*
 
+# Build output (pre-built artifacts)
+build/
+
 # Build results
 [Dd]ebug/
 [Rr]elease/

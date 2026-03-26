@@ -17,12 +17,24 @@ public class InteropWrapper
 
     public InteropWrapper()
     {
-        _dashboardVm = App.ServiceProvider.GetRequiredService<DashboardViewModel>();
+        try
+        {
+            _dashboardVm = App.ServiceProvider.GetRequiredService<DashboardViewModel>();
+        }
+        catch (Exception ex)
+        {
+            // Log the DI failure gracefully instead of producing cryptic JS errors
+            System.Diagnostics.Debug.WriteLine($"InteropWrapper DI init failed: {ex.Message}");
+            throw new InvalidOperationException(
+                "Failed to initialize hardware bridge. Some features may be unavailable.", ex);
+        }
     }
 
     public string GetStats()
     {
-        _dashboardVm.RefreshSensors();
+        // Sensor rebinding is expensive -- only do it on explicit user request,
+        // not on every poll cycle. The background HardwareMonitor thread handles
+        // periodic updates automatically.
         
         var stats = new
         {
@@ -265,7 +277,7 @@ public class InteropWrapper
         int? mem = int.TryParse(memStr, out int m) ? m : null;
         float? pwr = float.TryParse(pwrStr, out float p) ? p : null;
         
-        var profile = new PerformanceProfile
+        var profile = new GpuProfile
         {
             Id = string.IsNullOrEmpty(id) ? Guid.NewGuid().ToString("N") : id,
             Name = name,
