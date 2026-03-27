@@ -279,9 +279,27 @@ public sealed class NvidiaGpuControlService : IGpuControlService, IDisposable
             }
         }
 
+        // Fallback: search PATH environment variable
         if (_nvidiaSmiPath == null)
         {
-            _logger.LogInformation("nvidia-smi not found, GPU control unavailable");
+            var pathEnv = Environment.GetEnvironmentVariable("PATH");
+            if (!string.IsNullOrEmpty(pathEnv))
+            {
+                foreach (var dir in pathEnv.Split(Path.PathSeparator))
+                {
+                    var candidate = Path.Combine(dir.Trim(), "nvidia-smi.exe");
+                    if (File.Exists(candidate))
+                    {
+                        _nvidiaSmiPath = candidate;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (_nvidiaSmiPath == null)
+        {
+            _logger.LogInformation("nvidia-smi not found in known paths or PATH, GPU control unavailable");
             return;
         }
 

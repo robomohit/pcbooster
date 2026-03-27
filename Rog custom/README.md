@@ -1,161 +1,115 @@
-# Armoury Crate Lite
+# ROG Custom (PCBooster)
 
-A lightweight, web-based recreation of ASUS Armoury Crate with a modern, responsive design.
+A lightweight, open-source alternative to ASUS Armoury Crate for Windows. ROG Custom provides real-time hardware monitoring, performance mode switching, GPU overclocking, fan curve control, and GPU stress testing through a modern hybrid WPF + WebView2 architecture.
 
 ## Features
 
-### 🎮 Core Functionality
-- **Dashboard**: Real-time system monitoring with device status
-- **System Control**: Performance mode switching (Turbo/Balanced/Quiet)
-- **RGB Lighting**: Full lighting control with effects and colors
-- **Device Management**: Connected device overview and settings
+### Performance Mode Switching
+- **6 modes**: Silent, Windows, Balanced, Performance, Turbo, Manual
+- Each mode configures: Windows power plan, CPU boost policy, max processor state, core parking, fan curve, GPU power limit
+- Profiles persisted as JSON with schema versioning and automatic migration
 
-### 🌟 Key Features
-- **Modern UI**: Clean, dark theme with gradient accents
-- **Responsive Design**: Works on desktop, tablet, and mobile
-- **Real-time Monitoring**: Live system stats updates
-- **Keyboard Shortcuts**: Ctrl+1/2/3/4 for quick navigation
-- **Touch Support**: Swipe gestures for mobile navigation
-- **Smooth Animations**: Professional transitions and effects
+### Real-Time Hardware Monitoring
+- CPU and GPU temperatures, usage, power draw, and clock speeds
+- RAM and VRAM usage tracking
+- CPU and GPU fan RPM monitoring
+- Live 60-second performance telemetry graph in the UI
+- Uses LibreHardwareMonitor with fallback to PerformanceCounter / kernel32 when the LHM driver is blocked
 
-## 🚀 Quick Start
+### GPU Overclocking (NVIDIA)
+- Lock GPU core clocks and memory clocks via nvidia-smi
+- Hard safety caps: +100MHz core, +300MHz memory
+- Set GPU power limit within hardware min/max bounds
+- Reset all overclocks to defaults
+- **AI OC Scanner**: Automated scan that steps clock by 10MHz increments, reads real-time clocks, detects throttling, and finds max stable frequency
 
-1. **Open the Application**
-   ```bash
-   # Simply open index.html in your web browser
-   start index.html
-   ```
+### Fan Curve Control (FanControl Bridge)
+- Auto-detects FanControl installation
+- Hot-switches profiles via FanControl CLI
+- Falls back to config file swap + FanControl restart
+- Custom fan curve support via JSON
 
-2. **Navigate Sections**
-   - Use the sidebar navigation
-   - Keyboard shortcuts: Ctrl+1 (Dashboard), Ctrl+2 (System), Ctrl+3 (Lighting), Ctrl+4 (Devices)
-   - Mobile: Swipe left/right between sections
+### GPU Stress Test
+- Launches WinSAT D3D workload for real GPU load
+- Real-time temperature monitoring during test with CSV logging
+- Thermal kill-switch at configurable max temperature
+- Throttle detection when GPU clock drops >15% or temp exceeds 88C
+- Calculates a "RIG Score" based on usage, clocks, temps, and throttle events
 
-## 📱 Sections Overview
+### Game Auto-Detection
+- Polls running processes every 5 seconds against a list of popular games
+- Automatically switches to Performance mode when a game is detected
+- Reverts to Windows mode when the game closes
 
-### Dashboard
-- System performance overview
-- Connected device status
-- Quick action buttons for performance modes
-- Real-time monitoring widgets
+### Profile Management
+- Create, save, and delete named GPU profiles
+- Each profile stores: GPU core offset, memory offset, power limit, fan curve
+- Apply profiles to instantly configure all GPU and fan settings
 
-### System
-- Performance mode selection
-- System monitoring (CPU, Memory, GPU, Temperature)
-- Power management controls
+### Process Manager
+- Lists top 25 processes by memory usage
+- Shows system info: OS version, CPU cores, machine name, uptime
+- Kill processes by PID
 
-### Lighting
-- Zone-based lighting control
-- Multiple RGB effects (Static, Rainbow, Breathing, Wave)
-- Color picker with presets
-- Brightness and speed controls
+## Architecture
 
-### Devices
-- Connected device list
-- Device information and status
-- Firmware management
-- Individual device settings
+Built in **.NET 8 / C# with WPF**, using **WebView2** to render a modern HTML/CSS/JS frontend. The C# backend handles all hardware interactions via COM interop exposed to the JavaScript UI through `AddHostObjectToScript`.
 
-## 🎨 Design Features
+### Solution Structure
 
-### Visual Elements
-- **Dark Theme**: Easy on the eyes during gaming
-- **Gradient Accents**: Modern blue-cyan gradients
-- **Card-based Layout**: Clean, organized content
-- **Status Indicators**: Visual feedback for device states
+| Project | Purpose |
+|---------|---------|
+| `RogCustom.Core` | Domain models: PerformanceMode enum, PerformanceProfile, ProfileStore, config helpers |
+| `RogCustom.Hardware` | All hardware services: HardwareMonitor, GPU control, fan bridge, CPU boost, power plans, game detection, stress test |
+| `RogCustom.App` | WPF application with WebView2, ViewModels, Views, InteropWrapper, DI setup |
+| `RogCustom.ConsolePoC` | Console proof-of-concept for testing |
 
-### Interactions
-- **Hover Effects**: Smooth transitions on all interactive elements
-- **Loading States**: Professional loading animations
-- **Notifications**: Toast-style notifications for user feedback
-- **Responsive Grids**: Adaptive layouts for all screen sizes
+## Quick Start
 
-## 🔧 Technical Implementation
+### Prerequisites
+- Windows 10/11
+- .NET 8.0 SDK
+- WebView2 Runtime (included in Windows 11, downloadable for Windows 10)
+- NVIDIA GPU + nvidia-smi (for GPU overclocking features)
+- FanControl (optional, for fan curve management)
 
-### Frontend Stack
-- **HTML5**: Semantic markup structure
-- **CSS3**: Modern styling with animations
-- **Vanilla JavaScript**: No dependencies, pure JS implementation
+### Build and Run
 
-### Key Components
-- **Modular CSS**: Organized, maintainable stylesheets
-- **Event-driven JS**: Clean event handling and state management
-- **Responsive Grid**: CSS Grid and Flexbox for layouts
-- **CSS Variables**: Consistent theming and easy customization
+```powershell
+# Navigate to the source directory
+cd "Rog custom/src"
 
-### Browser Support
-- Chrome/Edge (Recommended)
-- Firefox
-- Safari
-- Mobile browsers
+# Build the solution
+dotnet build RogCustom.sln
 
-## 📋 System Requirements
+# Run the application (requires Administrator for hardware access)
+dotnet run --project RogCustom.App
+```
 
-### Minimum Requirements
-- Modern web browser (Chrome 80+, Firefox 75+, Safari 13+)
-- JavaScript enabled
-- CSS3 support
+### Using the Pre-built Executable
+
+```powershell
+# Run the batch file (requests admin elevation automatically)
+cd "Rog custom"
+run.bat
+```
+
+## UI Design
+- Dark ROG-themed design with gradient accents
+- Mode-dependent particle effects (snowflakes, orbs, embers, warp stars)
+- Sections: Dashboard, AI Assistant, Overclock, Fan Curves
+- Toast notifications for user feedback
+
+## System Requirements
+
+### Minimum
+- Windows 10 version 1903+
+- .NET 8.0 Runtime
+- 4GB RAM
+- Any GPU (NVIDIA recommended for OC features)
 
 ### Recommended
+- Windows 11
+- NVIDIA GPU with latest drivers
+- FanControl installed for fan curve management
 - 1920x1080 resolution or higher
-- Hardware acceleration enabled
-- Latest browser version
-
-## 🎮 Usage Tips
-
-### Performance Modes
-- **Turbo**: Maximum performance for gaming
-- **Balanced**: Optimal for everyday use
-- **Quiet**: Reduced noise and power consumption
-
-### Lighting Effects
-- **Static**: Solid color illumination
-- **Rainbow**: Animated rainbow wave
-- **Breathing**: Pulsing brightness effect
-- **Wave**: Moving light pattern
-
-### Keyboard Shortcuts
-- `Ctrl + 1`: Dashboard
-- `Ctrl + 2`: System
-- `Ctrl + 3`: Lighting
-- `Ctrl + 4`: Devices
-
-## 🔄 Future Enhancements
-
-### Planned Features
-- [ ] Game integration
-- [ ] Profile management
-- [ ] Cloud sync
-- [ ] Advanced monitoring
-- [ ] Macro support
-- [ ] Audio visualization
-
-### Technical Improvements
-- [ ] PWA support
-- [ ] Local storage for settings
-- [ ] WebSocket for real-time updates
-- [ ] Component-based architecture
-
-## 🐛 Troubleshooting
-
-### Common Issues
-- **Animations not smooth**: Enable hardware acceleration in browser settings
-- **Layout issues**: Clear browser cache and reload
-- **Touch not working**: Ensure touch events are enabled in mobile browser
-
-### Performance Tips
-- Close unnecessary browser tabs
-- Update to latest browser version
-- Disable browser extensions that may interfere
-
-## 📄 License
-
-This project is a demonstration recreation of Armoury Crate functionality for educational purposes.
-
-## 🤝 Contributing
-
-Feel free to submit issues and enhancement requests!
-
----
-
-**Note**: This is a frontend-only demonstration. Actual hardware integration would require additional backend services and device drivers.

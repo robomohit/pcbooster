@@ -78,8 +78,21 @@ public partial class MainWindow : Window
         WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
     }
     
-    public void ShowToast(string message, int durationMs = 3000)
+    public async void ShowToast(string message, int durationMs = 3000)
     {
-        // Stub: UI is now pure WebView2, so we can ignore native toasts or send them to JS if we want.
+        try
+        {
+            if (webView?.CoreWebView2 != null)
+            {
+                // Escape the message for safe JavaScript injection
+                var escaped = message.Replace("\\", "\\\\").Replace("'", "\\'").Replace("\n", "\\n");
+                await webView.CoreWebView2.ExecuteScriptAsync(
+                    $"if (typeof showToast === 'function') {{ showToast('{escaped}', {durationMs}); }}");
+            }
+        }
+        catch
+        {
+            // WebView2 may not be ready yet -- silently ignore
+        }
     }
 }

@@ -137,8 +137,19 @@ public sealed class ProfileStore : IProfileStore
             profile.SchemaVersion = PerformanceProfile.CurrentSchemaVersion;
             return profile;
         }
-        catch
+        catch (System.Text.Json.JsonException)
         {
+            // Corrupted JSON -- reset to defaults
+            return CreateDefault();
+        }
+        catch (IOException)
+        {
+            // File I/O failure -- reset to defaults
+            return CreateDefault();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // Permission denied -- reset to defaults
             return CreateDefault();
         }
     }

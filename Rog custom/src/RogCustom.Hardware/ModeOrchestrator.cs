@@ -98,9 +98,11 @@ public sealed class ModeOrchestrator : IModeOrchestrator
                 _logger.LogInformation("Mode {Mode}: Restored GPU power limit to default (100%)", mode);
             }
 
-            var profile2 = _profileStore.Load();
-            profile2.LastActiveMode = mode;
-            _profileStore.Save(profile2);
+            // Persist the active mode without a redundant full reload from disk.
+            // GetModeSettings() above already loaded the profile into memory.
+            var currentProfile = _profileStore.Load();
+            currentProfile.LastActiveMode = mode;
+            _profileStore.Save(currentProfile);
 
             _capabilities.ClearLastError();
             _logger.LogInformation("Mode {Mode} applied: boost={Boost}, maxCpu={MaxCpu}%, fan={Fan}, gpuPl={GpuPl}",

@@ -17,12 +17,24 @@ public class InteropWrapper
 
     public InteropWrapper()
     {
-        _dashboardVm = App.ServiceProvider.GetRequiredService<DashboardViewModel>();
+        try
+        {
+            _dashboardVm = App.ServiceProvider.GetRequiredService<DashboardViewModel>();
+        }
+        catch (Exception ex)
+        {
+            // Log the DI failure gracefully instead of producing cryptic JS errors
+            System.Diagnostics.Debug.WriteLine($"InteropWrapper DI init failed: {ex.Message}");
+            throw new InvalidOperationException(
+                "Failed to initialize hardware bridge. Some features may be unavailable.", ex);
+        }
     }
 
     public string GetStats()
     {
-        _dashboardVm.RefreshSensors();
+        // Sensor rebinding is expensive -- only do it on explicit user request,
+        // not on every poll cycle. The background HardwareMonitor thread handles
+        // periodic updates automatically.
         
         var stats = new
         {
@@ -193,6 +205,8 @@ public class InteropWrapper
         return svc.IsAutoSwitchingEnabled;
     }
 
+    // ── GPU Stress Test ──
+
     public void StartStressTest(int durationSeconds, int maxTempLimitC)
     {
         var svc = App.ServiceProvider.GetRequiredService<IGpuStressTestService>();
@@ -214,9 +228,137 @@ public class InteropWrapper
             progress = svc.ProgressPercent,
             message = svc.StatusMessage,
             maxGpuTemp = svc.MaxGpuTempRecorded,
+            minGpuTemp = svc.MinGpuTempRecorded,
+            avgGpuTemp = svc.AvgGpuTempRecorded,
+            maxGpuPower = svc.MaxGpuPowerRecorded,
+            avgGpuPower = svc.AvgGpuPowerRecorded,
+            maxGpuClock = svc.MaxGpuClockRecorded,
+            avgGpuClock = svc.AvgGpuClockRecorded,
+            maxGpuFanRpm = svc.MaxGpuFanRpmRecorded,
+            maxVramMb = svc.MaxVramUsageMb,
+            throttleEvents = svc.ThrottleEventCount,
+            stabilityGrade = svc.StabilityGrade,
             rigScore = svc.LastRigScore
         };
         return JsonSerializer.Serialize(status);
+    }
+
+    // ── CPU Stress Test ──
+
+    public void StartCpuStressTest(int durationSeconds, int maxTempLimitC)
+    {
+        var svc = App.ServiceProvider.GetRequiredService<ICpuStressTestService>();
+        svc.StartStressTest(durationSeconds, maxTempLimitC);
+    }
+
+    public void CancelCpuStressTest()
+    {
+        var svc = App.ServiceProvider.GetRequiredService<ICpuStressTestService>();
+        svc.CancelStressTest();
+    }
+
+    public string GetCpuStressTestStatus()
+    {
+        var svc = App.ServiceProvider.GetRequiredService<ICpuStressTestService>();
+        var status = new
+        {
+            isStressing = svc.IsStressing,
+            progress = svc.ProgressPercent,
+            message = svc.StatusMessage,
+            maxCpuTemp = svc.MaxCpuTempRecorded,
+            minCpuTemp = svc.MinCpuTempRecorded,
+            avgCpuTemp = svc.AvgCpuTempRecorded,
+            maxCpuPower = svc.MaxCpuPowerRecorded,
+            avgCpuPower = svc.AvgCpuPowerRecorded,
+            maxCpuClock = svc.MaxCpuClockRecorded,
+            avgCpuClock = svc.AvgCpuClockRecorded,
+            throttleEvents = svc.ThrottleEventCount,
+            stabilityGrade = svc.StabilityGrade,
+            cpuScore = svc.LastCpuScore
+        };
+        return JsonSerializer.Serialize(status);
+    }
+
+    // ── Combined Stress Test (CPU + GPU simultaneously) ──
+
+    public void StartCombinedStressTest(int durationSeconds, int maxTempLimitC)
+    {
+        var gpuSvc = App.ServiceProvider.GetRequiredService<IGpuStressTestService>();
+        var cpuSvc = App.ServiceProvider.GetRequiredService<ICpuStressTestService>();
+        gpuSvc.StartStressTest(durationSeconds, maxTempLimitC);
+        cpuSvc.StartStressTest(durationSeconds, maxTempLimitC);
+    }
+
+    public void CancelCombinedStressTest()
+    {
+        var gpuSvc = App.ServiceProvider.GetRequiredService<IGpuStressTestService>();
+        var cpuSvc = App.ServiceProvider.GetRequiredService<ICpuStressTestService>();
+        gpuSvc.CancelStressTest();
+        cpuSvc.CancelStressTest();
+    }
+
+    public string GetCombinedStressTestStatus()
+    {
+        var gpuSvc = App.ServiceProvider.GetRequiredService<IGpuStressTestService>();
+        var cpuSvc = App.ServiceProvider.GetRequiredService<ICpuStressTestService>();
+
+        bool eitherRunning = gpuSvc.IsStressing || cpuSvc.IsStressing;
+        int combinedProgress = eitherRunning
+            ? (gpuSvc.ProgressPercent + cpuSvc.ProgressPercent) / 2
+            : Math.Max(gpuSvc.ProgressPercent, cpuSvc.ProgressPercent);
+
+        // Combined RIG score = weighted sum of both
+        int? combinedScore = null;
+        if (gpuSvc.LastRigScore.HasValue && cpuSvc.LastCpuScore.HasValue)
+            combinedScore = (int)(gpuSvc.LastRigScore.Value * 0.6f + cpuSvc.LastCpuScore.Value * 0.4f);
+
+        string combinedGrade = "?";
+        if (gpuSvc.StabilityGrade != null && cpuSvc.StabilityGrade != null)
+            combinedGrade = CombineGrades(gpuSvc.StabilityGrade, cpuSvc.StabilityGrade);
+
+        var status = new
+        {
+            isStressing = eitherRunning,
+            progress = combinedProgress,
+            gpuMessage = gpuSvc.StatusMessage,
+            cpuMessage = cpuSvc.StatusMessage,
+            // GPU telemetry
+            maxGpuTemp = gpuSvc.MaxGpuTempRecorded,
+            avgGpuTemp = gpuSvc.AvgGpuTempRecorded,
+            maxGpuClock = gpuSvc.MaxGpuClockRecorded,
+            maxGpuPower = gpuSvc.MaxGpuPowerRecorded,
+            gpuThrottleEvents = gpuSvc.ThrottleEventCount,
+            gpuGrade = gpuSvc.StabilityGrade,
+            rigScore = gpuSvc.LastRigScore,
+            // CPU telemetry
+            maxCpuTemp = cpuSvc.MaxCpuTempRecorded,
+            avgCpuTemp = cpuSvc.AvgCpuTempRecorded,
+            maxCpuClock = cpuSvc.MaxCpuClockRecorded,
+            maxCpuPower = cpuSvc.MaxCpuPowerRecorded,
+            cpuThrottleEvents = cpuSvc.ThrottleEventCount,
+            cpuGrade = cpuSvc.StabilityGrade,
+            cpuScore = cpuSvc.LastCpuScore,
+            // Combined
+            combinedScore,
+            combinedGrade
+        };
+        return JsonSerializer.Serialize(status);
+    }
+
+    private static string CombineGrades(string g1, string g2)
+    {
+        static int GradeToNum(string g) => g switch
+        {
+            "A+" => 7, "A" => 6, "B+" => 5, "B" => 4,
+            "C" => 3, "D" => 2, "F" => 1, _ => 0
+        };
+        static string NumToGrade(int n) => n switch
+        {
+            >= 7 => "A+", 6 => "A", 5 => "B+", 4 => "B",
+            3 => "C", 2 => "D", _ => "F"
+        };
+        int avg = (GradeToNum(g1) + GradeToNum(g2)) / 2;
+        return NumToGrade(avg);
     }
 
 
@@ -265,7 +407,7 @@ public class InteropWrapper
         int? mem = int.TryParse(memStr, out int m) ? m : null;
         float? pwr = float.TryParse(pwrStr, out float p) ? p : null;
         
-        var profile = new PerformanceProfile
+        var profile = new GpuProfile
         {
             Id = string.IsNullOrEmpty(id) ? Guid.NewGuid().ToString("N") : id,
             Name = name,
@@ -289,5 +431,45 @@ public class InteropWrapper
         var svc = App.ServiceProvider.GetRequiredService<IProfileManagerService>();
         svc.DeleteProfile(id);
         return true;
+    }
+
+    // ── AI Stress Test Analysis ──
+
+    public string AnalyzeStressTestResults()
+    {
+        var gpuSvc = App.ServiceProvider.GetRequiredService<IGpuStressTestService>();
+        var cpuSvc = App.ServiceProvider.GetRequiredService<ICpuStressTestService>();
+        var monitor = App.ServiceProvider.GetRequiredService<IHardwareMonitor>();
+
+        var report = StressTestAnalyzer.Analyze(gpuSvc, cpuSvc, monitor);
+
+        return JsonSerializer.Serialize(new
+        {
+            overallVerdict = report.OverallVerdict,
+            overallGrade = report.OverallGrade,
+            overallScore = report.OverallScore,
+            findings = report.Findings,
+            recommendations = report.Recommendations,
+            detailedReport = report.DetailedReport,
+            gpu = report.Gpu != null ? new
+            {
+                thermalVerdict = report.Gpu.ThermalVerdict,
+                clockStability = report.Gpu.ClockStability,
+                powerEfficiency = report.Gpu.PowerEfficiency,
+                coolingAssessment = report.Gpu.CoolingAssessment,
+                vramStatus = report.Gpu.VramStatus,
+                score = report.Gpu.Score,
+                grade = report.Gpu.Grade
+            } : (object?)null,
+            cpu = report.Cpu != null ? new
+            {
+                thermalVerdict = report.Cpu.ThermalVerdict,
+                clockStability = report.Cpu.ClockStability,
+                powerAssessment = report.Cpu.PowerAssessment,
+                threadEfficiency = report.Cpu.ThreadEfficiency,
+                score = report.Cpu.Score,
+                grade = report.Cpu.Grade
+            } : (object?)null
+        });
     }
 }
