@@ -1063,6 +1063,122 @@ UNDERCLOCKING (THIS APP CAN DO THIS):
         }
     });
 
+    // ══════ AI STRESS TEST ANALYSIS ══════
+    async function runStressAnalysis() {
+        if (!window.chrome?.webview?.hostObjects) return;
+        try {
+            const raw = await window.chrome.webview.hostObjects.backend.AnalyzeStressTestResults();
+            const report = JSON.parse(raw);
+
+            if (!report.overallGrade || report.overallGrade === '?') {
+                alert('No stress test data available. Run a stress test first.');
+                return;
+            }
+
+            // Show in the stress test telemetry panel
+            const panel = document.getElementById('stressAiAnalysis');
+            if (panel) {
+                panel.style.display = 'block';
+
+                // Verdict
+                const verdictEl = document.getElementById('stressAiVerdictText');
+                if (verdictEl) {
+                    let verdictHtml = `<strong style="color:${getGradeColor(report.overallGrade)};">Overall: ${report.overallGrade} (${report.overallScore}/100)</strong><br>`;
+                    verdictHtml += report.overallVerdict;
+
+                    if (report.gpu) {
+                        verdictHtml += `<br><br><strong style="color:#ff8844;">GPU (${report.gpu.grade} - ${report.gpu.score}/100):</strong><br>`;
+                        verdictHtml += `Thermal: ${report.gpu.thermalVerdict}<br>`;
+                        verdictHtml += `Clocks: ${report.gpu.clockStability}<br>`;
+                        verdictHtml += `Power: ${report.gpu.powerEfficiency}<br>`;
+                        verdictHtml += `Cooling: ${report.gpu.coolingAssessment}`;
+                        if (report.gpu.vramStatus) verdictHtml += `<br>VRAM: ${report.gpu.vramStatus}`;
+                    }
+
+                    if (report.cpu) {
+                        verdictHtml += `<br><br><strong style="color:#4488ff;">CPU (${report.cpu.grade} - ${report.cpu.score}/100):</strong><br>`;
+                        verdictHtml += `Thermal: ${report.cpu.thermalVerdict}<br>`;
+                        verdictHtml += `Clocks: ${report.cpu.clockStability}<br>`;
+                        verdictHtml += `Power: ${report.cpu.powerAssessment}<br>`;
+                        verdictHtml += `Threads: ${report.cpu.threadEfficiency}`;
+                    }
+
+                    verdictEl.innerHTML = verdictHtml;
+                }
+
+                // Findings
+                const findingsEl = document.getElementById('stressAiFindings');
+                if (findingsEl && report.findings && report.findings.length > 0) {
+                    findingsEl.innerHTML = '<div style="font-size:10px; font-weight:700; color:#ffcc44; letter-spacing:1px; margin-bottom:4px;">FINDINGS</div>' +
+                        report.findings.map(f => `<div style="font-size:12px; color:var(--text-main); padding:2px 0;">* ${f}</div>`).join('');
+                } else if (findingsEl) {
+                    findingsEl.innerHTML = '';
+                }
+
+                // Recommendations
+                const recsEl = document.getElementById('stressAiRecommendations');
+                if (recsEl && report.recommendations && report.recommendations.length > 0) {
+                    recsEl.innerHTML = '<div style="font-size:10px; font-weight:700; color:#44ff88; letter-spacing:1px; margin-bottom:4px;">RECOMMENDATIONS</div>' +
+                        report.recommendations.map(r => `<div style="font-size:12px; color:var(--text-main); padding:2px 0;">&gt; ${r}</div>`).join('');
+                } else if (recsEl) {
+                    recsEl.innerHTML = '<div style="font-size:12px; color:#44ff88;">No issues found. Your system is performing well.</div>';
+                }
+            }
+
+            return report;
+        } catch(e) {
+            console.error('AI analysis failed:', e);
+        }
+    }
+
+    // Button in stress test panel
+    document.getElementById('aiAnalyzeStressBtn')?.addEventListener('click', runStressAnalysis);
+
+    // Chip in AI assistant section -- run analysis and inject into AI chat
+    document.getElementById('aiAnalyzeStressChip')?.addEventListener('click', async () => {
+        const report = await runStressAnalysis();
+        if (!report || !report.detailedReport) return;
+
+        // Also inject the analysis into the AI chat as a message
+        const messagesEl = document.getElementById('aiMessages');
+        if (messagesEl) {
+            // Add user message
+            const userMsg = document.createElement('div');
+            userMsg.className = 'ai-msg user';
+            userMsg.innerHTML = '<div class="msg-bubble">Analyze my stress test results and give me recommendations.</div>';
+            messagesEl.appendChild(userMsg);
+
+            // Add AI response with full analysis
+            const aiMsg = document.createElement('div');
+            aiMsg.className = 'ai-msg assistant';
+            let responseHtml = `<div class="msg-bubble">`;
+            responseHtml += `<strong>Stress Test Analysis Complete</strong><br><br>`;
+            responseHtml += `<strong>Overall Grade: <span style="color:${getGradeColor(report.overallGrade)}">${report.overallGrade}</span> (${report.overallScore}/100)</strong><br>`;
+            responseHtml += report.overallVerdict + '<br>';
+
+            if (report.gpu) {
+                responseHtml += `<br><strong style="color:#ff8844;">GPU: ${report.gpu.grade}</strong><br>`;
+                responseHtml += `${report.gpu.thermalVerdict}<br>${report.gpu.clockStability}<br>`;
+            }
+            if (report.cpu) {
+                responseHtml += `<br><strong style="color:#4488ff;">CPU: ${report.cpu.grade}</strong><br>`;
+                responseHtml += `${report.cpu.thermalVerdict}<br>${report.cpu.clockStability}<br>`;
+            }
+
+            if (report.recommendations && report.recommendations.length > 0) {
+                responseHtml += '<br><strong>Recommendations:</strong><br>';
+                report.recommendations.forEach(r => { responseHtml += `- ${r}<br>`; });
+            } else {
+                responseHtml += '<br>No issues found. Your system is running optimally!';
+            }
+
+            responseHtml += '</div>';
+            aiMsg.innerHTML = responseHtml;
+            messagesEl.appendChild(aiMsg);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+    });
+
     // AI Approve OC function (called from AI-generated buttons)
     window.approveOc = async function(type, value) {
         if (!window.chrome?.webview?.hostObjects) {

@@ -432,4 +432,44 @@ public class InteropWrapper
         svc.DeleteProfile(id);
         return true;
     }
+
+    // ── AI Stress Test Analysis ──
+
+    public string AnalyzeStressTestResults()
+    {
+        var gpuSvc = App.ServiceProvider.GetRequiredService<IGpuStressTestService>();
+        var cpuSvc = App.ServiceProvider.GetRequiredService<ICpuStressTestService>();
+        var monitor = App.ServiceProvider.GetRequiredService<IHardwareMonitor>();
+
+        var report = StressTestAnalyzer.Analyze(gpuSvc, cpuSvc, monitor);
+
+        return JsonSerializer.Serialize(new
+        {
+            overallVerdict = report.OverallVerdict,
+            overallGrade = report.OverallGrade,
+            overallScore = report.OverallScore,
+            findings = report.Findings,
+            recommendations = report.Recommendations,
+            detailedReport = report.DetailedReport,
+            gpu = report.Gpu != null ? new
+            {
+                thermalVerdict = report.Gpu.ThermalVerdict,
+                clockStability = report.Gpu.ClockStability,
+                powerEfficiency = report.Gpu.PowerEfficiency,
+                coolingAssessment = report.Gpu.CoolingAssessment,
+                vramStatus = report.Gpu.VramStatus,
+                score = report.Gpu.Score,
+                grade = report.Gpu.Grade
+            } : (object?)null,
+            cpu = report.Cpu != null ? new
+            {
+                thermalVerdict = report.Cpu.ThermalVerdict,
+                clockStability = report.Cpu.ClockStability,
+                powerAssessment = report.Cpu.PowerAssessment,
+                threadEfficiency = report.Cpu.ThreadEfficiency,
+                score = report.Cpu.Score,
+                grade = report.Cpu.Grade
+            } : (object?)null
+        });
+    }
 }

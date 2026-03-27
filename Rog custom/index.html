@@ -184,6 +184,7 @@
                         <button class="chip" data-prompt="Which mode should I use for gaming right now based on my current stats?">🎮 Best gaming mode</button>
                         <button class="chip" data-prompt="What processes or apps should I close to boost performance?">❌ Close what?</button>
                         <button class="chip" data-prompt="Look at my GPU stats and recommend a safe overclock for my GPU (core and memory clocks). Be conservative.">🔧 AI OC My GPU</button>
+                        <button class="chip" id="aiAnalyzeStressChip">📊 Analyze Stress Test</button>
                     </div>
 
                     <div class="ai-input-row">
@@ -352,6 +353,18 @@
                                     <div class="telemetry-row"><span>Avg Power</span><span id="telCpuAvgPower">--</span></div>
                                     <div class="telemetry-row"><span>Throttles</span><span id="telCpuThrottles">--</span></div>
                                 </div>
+                            </div>
+                            <div style="margin-top:14px; text-align:center;">
+                                <button class="ai-scan-btn" id="aiAnalyzeStressBtn" style="padding:8px 20px; background:linear-gradient(135deg, rgba(68,136,255,0.2), rgba(136,68,255,0.2)); border:1px solid rgba(100,150,255,0.4); color:#88bbff;">
+                                    RIGAI: Analyze Results
+                                </button>
+                            </div>
+                            <!-- AI Analysis Output -->
+                            <div id="stressAiAnalysis" style="display:none; margin-top:14px; padding:14px; background:rgba(68,136,255,0.06); border:1px solid rgba(68,136,255,0.15); border-radius:8px;">
+                                <div style="font-size:10px; font-weight:700; color:#88bbff; letter-spacing:1px; margin-bottom:8px;">RIGAI ANALYSIS</div>
+                                <div id="stressAiVerdictText" style="font-size:13px; color:var(--text-main); line-height:1.6;"></div>
+                                <div id="stressAiFindings" style="margin-top:10px;"></div>
+                                <div id="stressAiRecommendations" style="margin-top:10px;"></div>
                             </div>
                         </div>
                     </div>
